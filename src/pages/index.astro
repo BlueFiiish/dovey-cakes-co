@@ -1,0 +1,387 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LaurelDivider from '../components/LaurelDivider.astro';
+import CakeCard from '../components/CakeCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PopupCard from '../components/PopupCard.astro';
+import { business } from '../data/business';
+import { gallery } from '../data/gallery';
+import { imageForSlug } from '../lib/galleryImages';
+import { link } from '../lib/link';
+import heroCake from '../assets/hero/thirty-flirty-heart.png';
+import cookiesPhoto from '../assets/popup/cookies-in-cooler-1.jpg';
+import cartPhoto from '../assets/popup/cart-front-wide.jpg';
+
+const featuredSlugs = [
+  'cow-print-first-birthday',
+  'sagittarius-queen',
+  'fairy-garden',
+  'hello-kitty-avery',
+  'cinnamoroll',
+  'chapter-31',
+];
+const featured = featuredSlugs.map((s) => gallery.find((g) => g.slug === s)!).filter(Boolean);
+---
+
+<BaseLayout>
+  <!-- HERO -------------------------------------------------------------- -->
+  <section class="hero">
+    <div class="hero__blob" aria-hidden="true"></div>
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <p class="eyebrow">Custom cakes &middot; cookies &middot; cake pops &middot; {business.location.city}</p>
+        <h1 class="hero__title">Sweet things, <em>softly</em> made.</h1>
+        <p class="lead hero__lead">
+          Hand-piped, made-to-order treats from a small home kitchen in Rosenberg. Tell me the
+          occasion and I&rsquo;ll bake the rest.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href={link('/order/')}>Start an order</a>
+          <a class="btn btn--secondary" href={link('/cakes/')}>See the cakes</a>
+        </div>
+      </div>
+
+      <figure class="hero__figure">
+        <div class="hero__arch">
+          <Image
+            src={heroCake}
+            alt="Pink and red vintage heart cake with cherries, piped by hand"
+            widths={[420, 640, 860]}
+            sizes="(min-width: 880px) 480px, 82vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- TRUST STRIP -------------------------------------------------------- -->
+  <div class="trust">
+    <ul class="container trust__list" role="list">
+      <li>Made to order</li>
+      <li>Pickup in {business.location.city.replace(', TX', '')}</li>
+      <li>{business.ordering.payments.join(' or ')}</li>
+      <li>Order {business.ordering.leadTimeDays} days ahead</li>
+    </ul>
+  </div>
+
+  <!-- POP-UP ------------------------------------------------------------ -->
+  <section class="section popup-sec">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">This week on the porch</p>
+        <h2>Cookies and cake pops, fresh from the cart</h2>
+      </header>
+      <PopupCard />
+    </div>
+  </section>
+
+  <LaurelDivider />
+
+  <!-- FEATURED CAKES ----------------------------------------------------- -->
+  <section class="section section--white">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">Recent orders</p>
+        <h2>Every cake starts with your idea</h2>
+        <p class="lead">
+          Vintage hearts, character cakes, first birthdays and baby showers. Every one of these was
+          made for someone in Rosenberg.
+        </p>
+      </header>
+      <ul class="feat-grid" role="list">
+        {featured.map((c, i) => (
+          <li>
+            <CakeCard img={imageForSlug(c.slug)} title={c.title} note={c.note} tags={c.tags} arch={i % 2 === 0} eager={i < 2} />
+          </li>
+        ))}
+      </ul>
+      <p class="sec-cta reveal">
+        <a class="btn btn--secondary" href={link('/cakes/')}>See all {gallery.length} cakes</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS ------------------------------------------------------ -->
+  <section class="section section--blush">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">How ordering works</p>
+        <h2>Three easy steps</h2>
+      </header>
+      <ol class="steps" role="list">
+        <li class="step reveal">
+          <span class="step__num" aria-hidden="true">1</span>
+          <h3 class="step__h">Tell me your idea</h3>
+          <p class="step__p">
+            Send the date, how many people, flavors and any inspiration pictures through the
+            order form. At least {business.ordering.leadTimeDays} days ahead, please.
+          </p>
+        </li>
+        <li class="step reveal">
+          <span class="step__num" aria-hidden="true">2</span>
+          <h3 class="step__h">I confirm, you pay</h3>
+          <p class="step__p">
+            I reply with a quote and your pickup time. A 50% deposit by
+            {' '}{business.ordering.payments.join(' or ')} locks in your date.
+          </p>
+        </li>
+        <li class="step reveal">
+          <span class="step__num" aria-hidden="true">3</span>
+          <h3 class="step__h">Pick up in Rosenberg</h3>
+          <p class="step__p">
+            Your order is ready at the time we agree. Pop-up cookies and cake pops are first come,
+            first served.
+          </p>
+        </li>
+      </ol>
+      <p class="sec-cta reveal">
+        <a class="btn btn--primary" href={link('/order/')}>Start an order</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- COOKIES & POPS TEASER --------------------------------------------- -->
+  <section class="section">
+    <div class="container treats">
+      <div class="treats__copy reveal">
+        <p class="eyebrow">Cookies &amp; cake pops</p>
+        <h2>Small treats, same hands</h2>
+        <p class="lead">
+          Stuffed cookies on a seasonal menu and cake pops by the piece. Grab them at a porch
+          pop-up, or order a batch for a party.
+        </p>
+        <div class="treats__actions">
+          <a class="btn btn--secondary" href={link('/menu/')}>See the menu</a>
+          <a class="link-arrow" href={link('/pop-ups/')}>How pop-ups work &rarr;</a>
+        </div>
+      </div>
+      <div class="treats__photos reveal">
+        <div class="media-rounded treats__photo treats__photo--a">
+          <Image src={cookiesPhoto} alt="Individually wrapped stuffed cookies in a white bin at the pop-up" widths={[360, 540, 720]} sizes="(min-width: 820px) 320px, 60vw" loading="lazy" />
+        </div>
+        <div class="media-rounded treats__photo treats__photo--b">
+          <Image src={cartPhoto} alt="The black Dovey Cakes Co. cart set up on the porch for a pop-up" widths={[360, 540, 720]} sizes="(min-width: 820px) 280px, 50vw" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  /* ---- Hero ------------------------------------------------------------ */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background: var(--c-cream);
+  }
+  .hero__blob {
+    position: absolute;
+    right: -120px;
+    top: -80px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: var(--c-blush);
+    pointer-events: none;
+  }
+  .hero__inner {
+    position: relative;
+    display: grid;
+    gap: var(--sp-6);
+    padding-block: var(--sp-6) var(--sp-7);
+  }
+  .hero__title {
+    margin-bottom: var(--sp-4);
+    max-width: 12ch;
+    text-wrap: balance;
+  }
+  .hero__lead {
+    margin-bottom: var(--sp-5);
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+  .hero__figure {
+    margin: 0;
+    width: 100%;
+    max-width: 480px;
+    margin-inline: auto;
+  }
+  .hero__arch {
+    background: var(--c-blush);
+    border-radius: 240px 240px var(--radius) var(--radius);
+    aspect-ratio: 4 / 4.6;
+    padding: 10% 6% 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .hero__arch img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center bottom;
+    filter: drop-shadow(0 18px 24px rgba(74, 47, 42, 0.22));
+  }
+  @media (min-width: 880px) {
+    .hero__inner {
+      grid-template-columns: 1.05fr 0.95fr;
+      align-items: center;
+      column-gap: var(--sp-8);
+      padding-block: var(--sp-9) var(--sp-8);
+    }
+    .hero__blob {
+      right: -90px;
+      top: -40px;
+    }
+  }
+
+  /* ---- Trust strip ----------------------------------------------------- */
+  .trust {
+    background: var(--c-blush);
+    padding-block: var(--sp-3);
+  }
+  .trust__list {
+    list-style: none;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-6);
+    font-weight: 600;
+    font-size: var(--fs-sm);
+  }
+  .trust__list li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+  .trust__list li::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-rose);
+  }
+
+  .popup-sec {
+    padding-bottom: var(--sp-5);
+  }
+
+  /* ---- Featured grid --------------------------------------------------- */
+  .feat-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-5);
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 720px) {
+    .feat-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sp-6) var(--sp-5);
+    }
+  }
+  .sec-cta {
+    margin: var(--sp-7) 0 0;
+  }
+
+  /* ---- Steps ---------------------------------------------------------- */
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-4);
+  }
+  @media (min-width: 760px) {
+    .steps {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sp-5);
+    }
+  }
+  .step {
+    background: var(--c-white);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    padding: var(--sp-5);
+  }
+  .step__num {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--c-ink);
+    color: var(--c-cream);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin-bottom: var(--sp-3);
+  }
+  .step__h {
+    margin-bottom: var(--sp-2);
+    font-size: 1.6rem;
+  }
+  .step__p {
+    color: var(--c-ink-soft);
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+
+  /* ---- Treats teaser --------------------------------------------------- */
+  .treats {
+    display: grid;
+    gap: var(--sp-7);
+  }
+  @media (min-width: 820px) {
+    .treats {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-8);
+      align-items: center;
+    }
+  }
+  .treats__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .link-arrow:hover {
+    text-decoration: underline;
+  }
+  .treats__photos {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: var(--sp-4);
+    align-items: end;
+  }
+  .treats__photo img {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+  }
+  .treats__photo--a {
+    border-radius: 140px 140px var(--radius) var(--radius);
+  }
+  .treats__photo--b {
+    margin-bottom: var(--sp-7);
+  }
+</style>

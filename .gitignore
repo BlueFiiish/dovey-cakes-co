@@ -1,0 +1,18 @@
+# build output
+dist/
+# generated types / cache
+.astro/
+# dependencies
+node_modules/
+# logs
+npm-debug.log*
+# os / editor cruft
+.DS_Store
+# env
+.env
+.env.production
+
+# test artifacts
+.playwright-cli/
+.playwright-mcp/
+*-shot*.png

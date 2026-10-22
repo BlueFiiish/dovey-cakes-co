@@ -1,0 +1,370 @@
+/* ===========================================================================
+   Dovey Cakes Co. - design tokens + base styles
+   Direction B "Dove & Laurel" (picked 2026-10-22): blush and dusty rose lifted
+   from her badge logo, cocoa ink, arch shapes, laurel dividers, white mats so
+   the cut-out cakes sit on the same white as their photos.
+   =========================================================================== */
+
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+@import '@fontsource-variable/figtree';
+
+:root {
+  /* ---- Palette (from the logo: cream disc, dusty-rose dove, cocoa text) --- */
+  --c-cream: #fbf4ef;          /* page background */
+  --c-blush: #f4e3dc;          /* alternating section wash */
+  --c-butter: #f7ecdf;         /* warm wash (a touch of direction A) */
+  --c-ink: #4a2f2a;            /* primary text (cocoa) */
+  --c-ink-soft: #7a5f5a;       /* secondary text - 5.4:1 on cream */
+  --c-white: #ffffff;
+
+  --c-rose: #b8777a;           /* THE brand rose: decorative, large type, dots, dividers */
+  --c-rose-deep: #a4595e;      /* rose for buttons/links: 4.7:1 on cream, white text 5.0:1 */
+  --c-rose-dark: #8e4a4f;      /* hover */
+  --c-cocoa: #6b4634;          /* secondary accent (step numbers, small labels) */
+
+  --c-line: #ead6cf;           /* hairlines on cream */
+  --c-mat: #ffffff;            /* white mat behind every cut-out cake */
+  --c-border-field: #8a6f69;   /* form field borders - 3:1+ on white */
+  --c-placeholder: #6f5752;    /* placeholder text - 4.5:1+ */
+
+  /* ---- Type ------------------------------------------------------------- */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --fs-xs: 0.8125rem;   /* 13px */
+  --fs-sm: 0.9375rem;   /* 15px */
+  --fs-base: 1.0625rem; /* 17px */
+  --fs-md: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
+  --fs-lg: clamp(1.6rem, 1.3rem + 1.2vw, 2.2rem);
+  --fs-xl: clamp(2.1rem, 1.5rem + 2.6vw, 3.4rem);
+  --fs-2xl: clamp(2.8rem, 1.7rem + 4.4vw, 5.2rem);
+
+  /* ---- Spacing (4 / 8 base) --------------------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+  --sp-10: 8rem;
+
+  --radius: 22px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
+  --radius-arch: 160px 160px var(--radius) var(--radius);
+  --shadow-soft: 0 14px 36px -16px rgba(74, 47, 42, 0.28);
+  --shadow-card: 0 10px 26px -16px rgba(74, 47, 42, 0.34);
+  --shadow-lift: 0 22px 48px -20px rgba(74, 47, 42, 0.42);
+
+  --maxw: 1180px;
+  --maxw-prose: 62ch;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--c-ink);
+  background: var(--c-cream);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.06;
+  color: var(--c-ink);
+  margin: 0 0 var(--sp-4);
+  letter-spacing: -0.005em;
+}
+h1 {
+  font-size: var(--fs-2xl);
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-size: var(--fs-xl);
+}
+h3 {
+  font-size: var(--fs-lg);
+}
+h4 {
+  font-size: var(--fs-md);
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+em,
+.em-rose {
+  font-style: italic;
+  color: var(--c-rose-deep);
+}
+
+p {
+  margin: 0 0 var(--sp-4);
+}
+
+a {
+  color: var(--c-rose-deep);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover {
+  color: var(--c-rose-dark);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+ul,
+ol {
+  margin: 0 0 var(--sp-4);
+  padding-left: 1.25em;
+}
+
+/* ---- Visible focus everywhere ------------------------------------------- */
+:focus-visible {
+  outline: 3px solid var(--c-rose-deep);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ---- Skip link ---------------------------------------------------------- */
+.skip-link {
+  position: absolute;
+  left: var(--sp-4);
+  top: -100px;
+  z-index: 200;
+  background: var(--c-ink);
+  color: var(--c-white);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: var(--sp-4);
+  color: var(--c-white);
+}
+
+/* ---- Layout helpers ----------------------------------------------------- */
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--sp-5);
+}
+@media (min-width: 768px) {
+  .container {
+    padding-inline: var(--sp-6);
+  }
+}
+
+.section {
+  padding-block: var(--sp-8);
+}
+@media (min-width: 768px) {
+  .section {
+    padding-block: var(--sp-9);
+  }
+}
+.section--blush {
+  background: var(--c-blush);
+}
+.section--butter {
+  background: var(--c-butter);
+}
+.section--white {
+  background: var(--c-white);
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-rose-deep);
+  margin: 0 0 var(--sp-3);
+  text-wrap: balance;
+}
+
+.lead {
+  font-size: var(--fs-md);
+  color: var(--c-ink-soft);
+  max-width: var(--maxw-prose);
+}
+
+.sec-head {
+  max-width: var(--maxw-prose);
+  margin-bottom: var(--sp-6);
+}
+.sec-head h2 {
+  margin-bottom: var(--sp-3);
+}
+.sec-head .lead {
+  margin-bottom: 0;
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--fs-base);
+  line-height: 1;
+  text-decoration: none;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  padding: 1rem 1.75rem;
+  min-height: 48px;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease,
+    border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Primary = rose, reserved for ordering */
+.btn--primary {
+  background: var(--c-rose-deep);
+  color: var(--c-white);
+  box-shadow: 0 10px 22px -14px rgba(164, 89, 94, 0.9);
+}
+.btn--primary:hover {
+  background: var(--c-rose-dark);
+  color: var(--c-white);
+}
+
+/* Secondary = outline on a white pill */
+.btn--secondary {
+  background: var(--c-white);
+  color: var(--c-ink);
+  border-color: var(--c-line);
+}
+.btn--secondary:hover {
+  border-color: var(--c-ink);
+  color: var(--c-ink);
+}
+
+/* Dark = cocoa, for the sticky bar */
+.btn--dark {
+  background: var(--c-ink);
+  color: var(--c-cream);
+}
+.btn--dark:hover {
+  background: #352119;
+  color: var(--c-white);
+}
+
+/* ---- Cards / the white-mat rule ----------------------------------------- */
+.card {
+  background: var(--c-white);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+/* Every cake photo is a cut-out on white: the mat is white too, so the cake
+   reads as "sitting" on the card rather than a photo pasted into it. */
+.cake-mat {
+  background: var(--c-mat);
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+  box-shadow: var(--shadow-card);
+}
+.cake-mat img {
+  border-radius: var(--radius-sm);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 4 / 5;
+}
+
+.media-rounded {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Sticky-header anchor offsets */
+:target {
+  scroll-margin-top: 96px;
+}
+#main {
+  scroll-margin-top: 5rem;
+}
+
+/* Mobile bottom room so the sticky action bar never covers content */
+@media (max-width: 879px) {
+  body {
+    padding-bottom: 72px;
+  }
+}
+
+/* ---- Scroll-reveal (progressive enhancement) ---------------------------- */
+.reveal {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+html.js .reveal:not(.is-in) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal:not(.is-in) {
+    opacity: 1;
+    transform: none;
+  }
+}

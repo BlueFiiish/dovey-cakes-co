@@ -1,0 +1,394 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LaurelDivider from '../components/LaurelDivider.astro';
+import { business, emailDisplay, mailtoHref } from '../data/business';
+import { orderForm, orderFormIntro } from '../data/order-form';
+import { flavors, fillings } from '../data/menu';
+import { link } from '../lib/link';
+
+const title = 'Start an order';
+const description =
+  'Order a custom cake, cookies or cake pops from Dovey Cakes Co. in Rosenberg, TX. Send the date, the headcount and your idea for a quote. Pickup only; 50% deposit by Zelle or Cash App books your date.';
+
+const flavorOptions = flavors.map((f) =>
+  f.name === 'Custom' ? 'Custom (quoted)' : f.upchargeUsd === 5 ? `${f.name} (+$5)` : f.name
+);
+const fillingOptions = [...fillings];
+function optionsFor(name: string, fallback?: readonly string[]): readonly string[] {
+  if (name === 'flavor') return flavorOptions;
+  if (name === 'filling') return fillingOptions;
+  return fallback ?? [];
+}
+const mainFields = orderForm.filter((f) => !f.cakeOnly && f.type !== 'file' && f.name !== 'details');
+const cakeFields = orderForm.filter((f) => f.cakeOnly);
+const tailFields = orderForm.filter((f) => f.type === 'file' || f.name === 'details');
+
+// Web3Forms access key. Until the real key exists, submissions fall back to email.
+const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="section order-intro">
+    <div class="container">
+      <div class="order-intro__inner">
+        <p class="eyebrow">Start an order</p>
+        <h1>Tell me what you&rsquo;re celebrating</h1>
+        <p class="lead">{orderFormIntro}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--white order-main">
+    <div class="container order-layout">
+      <div class="order-form-wrap">
+        <div class="form-success" id="form-success" hidden role="status" tabindex="-1">
+          <h2>Got it, thank you!</h2>
+          <p>
+            I&rsquo;ll reply by email with a quote and your pickup time. If it&rsquo;s urgent, email
+            me at <a href={mailtoHref}>{emailDisplay}</a>.
+          </p>
+        </div>
+
+        <p class="form-quick">
+          Rather just email? <a href={mailtoHref}>{emailDisplay}</a>
+        </p>
+
+        <form
+          id="order-form"
+          class="order-form"
+          action="https://api.web3forms.com/submit"
+          method="POST"
+          enctype="multipart/form-data"
+        >
+          <input type="hidden" name="access_key" value={WEB3FORMS_KEY} />
+          <input type="hidden" name="subject" value="New order request - Dovey Cakes Co." />
+          <input type="hidden" name="from_name" value="Dovey Cakes Co. website" />
+          <input type="checkbox" name="botcheck" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+          <p class="form-required-note"><span class="req" aria-hidden="true">*</span> Required</p>
+
+          <div class="form-grid">
+            {mainFields.map((field) => {
+              const id = `f-${field.name}`;
+              const describedBy = field.help ? `${id}-help` : undefined;
+              const isWide = field.type === 'textarea' || field.name === 'quantity';
+              return (
+                <div class={`field${isWide ? ' field--wide' : ''}`}>
+                  <label for={id}>
+                    {field.label}
+                    {field.required && <span class="req" aria-hidden="true"> *</span>}
+                  </label>
+                  {field.type === 'select' ? (
+                    <select id={id} name={field.name} required={field.required} aria-describedby={describedBy}>
+                      <option value="" disabled selected>Choose one&hellip;</option>
+                      {optionsFor(field.name, field.options).map((o) => <option value={o}>{o}</option>)}
+                    </select>
+                  ) : (
+                    <input id={id} name={field.name} type={field.type} required={field.required} aria-describedby={describedBy}
+                      autocomplete={field.name === 'name' ? 'name' : field.name === 'email' ? 'email' : field.name === 'phone' ? 'tel' : undefined} />
+                  )}
+                  {field.help && <p class="field__help" id={`${id}-help`}>{field.help}</p>}
+                </div>
+              );
+            })}
+          </div>
+
+          <fieldset class="cake-fields">
+            <legend>Cake details <span class="legend-note">(skip for cookies or cake pops)</span></legend>
+            <div class="form-grid">
+              {cakeFields.map((field) => {
+                const id = `f-${field.name}`;
+                const describedBy = field.help ? `${id}-help` : undefined;
+                return (
+                  <div class={`field${field.name === 'colorTheme' ? ' field--wide' : ''}`}>
+                    <label for={id}>{field.label}</label>
+                    {field.type === 'select' ? (
+                      <select id={id} name={field.name} aria-describedby={describedBy}>
+                        <option value="" selected>Choose one&hellip;</option>
+                        {optionsFor(field.name, field.options).map((o) => <option value={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <input id={id} name={field.name} type={field.type} aria-describedby={describedBy} />
+                    )}
+                    {field.help && <p class="field__help" id={`${id}-help`}>{field.help}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <div class="form-grid">
+            {tailFields.map((field) => {
+              const id = `f-${field.name}`;
+              const describedBy = field.help ? `${id}-help` : undefined;
+              return (
+                <div class="field field--wide">
+                  <label for={id}>{field.label}</label>
+                  {field.type === 'textarea' ? (
+                    <textarea id={id} name={field.name} rows={4} aria-describedby={describedBy}></textarea>
+                  ) : (
+                    <input id={id} name={field.name} type="file" accept="image/*" multiple aria-describedby={describedBy} />
+                  )}
+                  {field.help && <p class="field__help" id={`${id}-help`}>{field.help}</p>}
+                </div>
+              );
+            })}
+          </div>
+
+          <button type="submit" class="btn btn--primary order-form__submit">Send my request</button>
+          <p class="form-error" id="form-error" hidden role="alert">
+            Something went wrong sending the form. Please email
+            <a href={mailtoHref}>{emailDisplay}</a> instead.
+          </p>
+        </form>
+      </div>
+
+      <aside class="order-aside">
+        <div class="order-aside__card">
+          <h2>Before you send</h2>
+          <ul class="order-aside__list">
+            <li><strong>Lead time:</strong> at least {business.ordering.leadTimeDays} days. Under a week adds a ${business.ordering.rushFeeUsd} rush fee.</li>
+            <li><strong>Deposit:</strong> {business.ordering.deposit}.</li>
+            <li><strong>Payments:</strong> {business.ordering.payments.join(' or ')}.</li>
+            <li><strong>Pickup:</strong> {business.ordering.fulfillment}, in {business.location.city}. The spot is shared once your order is confirmed.</li>
+          </ul>
+          <p class="order-aside__hint">
+            Not sure on size? <a href={link('/menu/#sizes')}>Check the serving chart</a>. Want ideas?
+            <a href={link('/cakes/')}>Browse the cakes</a>.
+          </p>
+        </div>
+        <LaurelDivider compact />
+        <ol class="mini-steps" role="list">
+          <li><strong>1.</strong> You send this form.</li>
+          <li><strong>2.</strong> I reply with a quote and your pickup time.</li>
+          <li><strong>3.</strong> You pay the deposit, I bake, you pick up.</li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('order-form') as HTMLFormElement | null;
+  const success = document.getElementById('form-success');
+  const errorEl = document.getElementById('form-error');
+
+  if (form && success && errorEl) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.hidden = true;
+      const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+      }
+      try {
+        const res = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success !== false) {
+          form.hidden = true;
+          success.hidden = false;
+          success.focus();
+          success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        throw new Error('submit failed');
+      } catch {
+        errorEl.hidden = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send my request';
+        }
+      }
+    });
+  }
+</script>
+
+<style>
+  .order-intro__inner {
+    max-width: var(--maxw-prose);
+  }
+  .order-intro h1 {
+    margin-bottom: var(--sp-4);
+    max-width: 14ch;
+    text-wrap: balance;
+  }
+  .order-main {
+    padding-top: var(--sp-6);
+  }
+  .order-layout {
+    display: grid;
+    gap: var(--sp-7);
+  }
+  @media (min-width: 900px) {
+    .order-layout {
+      grid-template-columns: 1.6fr 1fr;
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+
+  .form-quick {
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+    margin-bottom: var(--sp-5);
+  }
+  .form-required-note {
+    font-size: var(--fs-xs);
+    color: var(--c-ink-soft);
+    margin: 0 0 var(--sp-4);
+  }
+  .req {
+    color: var(--c-rose-deep);
+  }
+  .form-grid {
+    display: grid;
+    gap: var(--sp-4);
+  }
+  @media (min-width: 620px) {
+    .form-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .field--wide {
+      grid-column: 1 / -1;
+    }
+  }
+  .field label {
+    display: block;
+    font-weight: 700;
+    font-size: var(--fs-sm);
+    margin-bottom: var(--sp-1);
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--c-ink);
+    background: var(--c-white);
+    border: 1.5px solid var(--c-border-field);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.9rem;
+    min-height: 48px;
+  }
+  .field textarea {
+    min-height: 7rem;
+    resize: vertical;
+  }
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: var(--c-placeholder);
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    outline: 3px solid var(--c-rose-deep);
+    outline-offset: 1px;
+    border-color: var(--c-rose-deep);
+  }
+  .field input[type='file'] {
+    padding: 0.6rem;
+    min-height: 0;
+  }
+  .field__help {
+    font-size: var(--fs-xs);
+    color: var(--c-ink-soft);
+    margin: var(--sp-1) 0 0;
+  }
+
+  .cake-fields {
+    margin: var(--sp-6) 0;
+    padding: var(--sp-5);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    background: var(--c-cream);
+  }
+  .cake-fields legend {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    padding-inline: var(--sp-2);
+  }
+  .legend-note {
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+
+  .order-form__submit {
+    margin-top: var(--sp-6);
+    width: 100%;
+  }
+  @media (min-width: 620px) {
+    .order-form__submit {
+      width: auto;
+    }
+  }
+  .form-error {
+    margin: var(--sp-4) 0 0;
+    padding: var(--sp-3) var(--sp-4);
+    background: #fde8e8;
+    border: 1px solid #e3a0a0;
+    border-radius: var(--radius-sm);
+    color: #7a1f1f;
+    font-size: var(--fs-sm);
+  }
+  .form-error a {
+    color: inherit;
+  }
+  .form-success {
+    padding: var(--sp-6);
+    background: var(--c-blush);
+    border-radius: var(--radius);
+    margin-bottom: var(--sp-5);
+  }
+  .form-success h2 {
+    margin-bottom: var(--sp-2);
+  }
+  .form-success p {
+    margin: 0;
+  }
+
+  .order-aside__card {
+    background: var(--c-cream);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    padding: var(--sp-5);
+  }
+  .order-aside__card h2 {
+    font-size: 1.6rem;
+    margin-bottom: var(--sp-3);
+  }
+  .order-aside__list {
+    list-style: none;
+    margin: 0 0 var(--sp-4);
+    padding: 0;
+    display: grid;
+    gap: var(--sp-3);
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .order-aside__list strong {
+    color: var(--c-ink);
+  }
+  .order-aside__hint {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .mini-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-2);
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .mini-steps strong {
+    color: var(--c-rose-deep);
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin-right: var(--sp-1);
+  }
+</style>

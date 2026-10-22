@@ -1,0 +1,159 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LaurelDivider from '../components/LaurelDivider.astro';
+import CakeCard from '../components/CakeCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { business } from '../data/business';
+import { gallery } from '../data/gallery';
+import { imageForSlug } from '../lib/galleryImages';
+import { link } from '../lib/link';
+
+const title = 'About';
+const description =
+  'Dovey Cakes Co. is a small home bakery in Rosenberg, TX making custom cakes, stuffed cookies and cake pops to order, plus porch pop-ups most weeks.';
+
+const aboutSlugs = ['pink-bows-and-pearls', 'piplup', 'rip-30-black-heart'];
+const aboutCakes = aboutSlugs.map((s) => gallery.find((g) => g.slug === s)!).filter(Boolean);
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="section about-intro">
+    <div class="container">
+      <div class="about-intro__inner">
+        <p class="eyebrow">About</p>
+        <h1>A small home bakery in Rosenberg</h1>
+        <p class="lead">
+          {business.name} makes custom cakes, stuffed cookies and cake pops to order for
+          {' '}{business.location.serviceArea}, and rolls the cart onto the porch most weeks for a
+          pop-up.
+        </p>
+        <p>
+          Everything is baked and decorated by hand, one order at a time. The vintage heart cakes
+          with their piped shells and pearls are the signature, the character cakes are the fun
+          part, and the cookie menu changes with the season. Every photo on this site is a real
+          order, not a stock picture.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <LaurelDivider />
+
+  <section class="section section--white">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">What comes out of the kitchen</p>
+        <h2>Three kinds of sweet</h2>
+      </header>
+      <div class="about-cols">
+        <div class="about-text reveal">
+          <h3>Vintage hearts &amp; lambeth piping</h3>
+          <p>
+            Hand-piped shells, swags, pearls and bows in buttercream, on heart cakes and tall rounds.
+            Pink and cherry red, all black, peach, or your colors.
+          </p>
+          <h3>Character &amp; themed cakes</h3>
+          <p>
+            Stitch, Hello Kitty, Mario, Blippi, Coco, Pooh, unicorns, cows and dinosaurs, with
+            sculpted toppers, edible images and fondant details for the kid who knows exactly what
+            they want.
+          </p>
+          <h3>Cookies &amp; cake pops</h3>
+          <p>
+            Thick stuffed cookies on a seasonal menu and cake pops by the piece, sold from the cart
+            at <a href={link('/pop-ups/')}>porch pop-ups</a> or ordered ahead by the batch.
+          </p>
+        </div>
+        <ul class="about-cakes" role="list">
+          {aboutCakes.map((c, i) => (
+            <li>
+              <CakeCard img={imageForSlug(c.slug)} title={c.title} note={c.note} tags={c.tags} arch={i === 0} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--blush">
+    <div class="container about-how">
+      <div class="reveal">
+        <h2>How ordering works</h2>
+        <p>
+          Send an order request with the date, the headcount and the idea. Inspiration photos are
+          welcome. You&rsquo;ll get a quote and a pickup time back; a 50% deposit by
+          {' '}{business.ordering.payments.join(' or ')} books the date, and the balance is due before
+          pickup. Everything is {business.ordering.fulfillment.toLowerCase()} in {business.location.city}.
+        </p>
+        <p>
+          Please allow at least {business.ordering.leadTimeDays} days. The more notice, the more can go
+          into the design.
+        </p>
+        <p class="about-cottage">{business.cottageFoodDisclosure}</p>
+      </div>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .about-intro__inner {
+    max-width: var(--maxw-prose);
+  }
+  .about-intro h1 {
+    margin-bottom: var(--sp-4);
+    max-width: 16ch;
+    text-wrap: balance;
+  }
+  .about-cols {
+    display: grid;
+    gap: var(--sp-7);
+  }
+  @media (min-width: 880px) {
+    .about-cols {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+  .about-text h3 {
+    margin-top: var(--sp-6);
+    margin-bottom: var(--sp-2);
+    font-size: 1.6rem;
+  }
+  .about-text h3:first-child {
+    margin-top: 0;
+  }
+  .about-text p {
+    color: var(--c-ink-soft);
+    max-width: var(--maxw-prose);
+  }
+  .about-cakes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-5);
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .about-cakes li:nth-child(3) {
+    grid-column: 1 / -1;
+    max-width: 50%;
+  }
+  @media (min-width: 880px) {
+    .about-cakes {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .about-how {
+    max-width: var(--maxw-prose);
+  }
+  .about-cottage {
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--c-line);
+    margin-bottom: 0;
+  }
+</style>

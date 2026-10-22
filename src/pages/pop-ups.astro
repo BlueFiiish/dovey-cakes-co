@@ -1,0 +1,122 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LaurelDivider from '../components/LaurelDivider.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PopupCard from '../components/PopupCard.astro';
+import { business } from '../data/business';
+import { popups } from '../data/popups';
+import { link } from '../lib/link';
+import cartWide from '../assets/popup/cart-front-wide.jpg';
+import cartClose from '../assets/popup/cart-logo-close.jpg';
+import cookies1 from '../assets/popup/cookies-in-cooler-1.jpg';
+import cookies2 from '../assets/popup/cookies-in-cooler-2.jpg';
+
+const title = 'Porch pop-ups';
+const description =
+  'Dovey Cakes Co. porch pop-ups in Rosenberg, TX: fresh stuffed cookies and cake pops from the cart, most weeks. Dates and the menu of the week are posted on TikTok.';
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="section pop-intro">
+    <div class="container">
+      <p class="eyebrow">Porch pop-ups</p>
+      <h1>Come on out</h1>
+      <p class="lead">
+        {popups.cadence}, the cart rolls onto the porch with the week&rsquo;s cookies and a cooler of
+        cake pops. {popups.howToFindOut}
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--white pop-main">
+    <div class="container">
+      <PopupCard />
+    </div>
+  </section>
+
+  <LaurelDivider />
+
+  <section class="section">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">What to expect</p>
+        <h2>The cart, the cookies, the cooler</h2>
+      </header>
+      <div class="pop-grid">
+        <ul class="pop-list reveal" role="list">
+          {popups.whatToExpect.map((w) => <li>{w}</li>)}
+          <li>{popups.typicalHours}</li>
+          <li>Follow <a href={business.contact.tiktok.url} rel="noopener" target="_blank">{business.contact.tiktok.handle}</a> for the next date. Big batch for a party? <a href={link('/order/')}>Order ahead</a>.</li>
+        </ul>
+        <ul class="pop-photos reveal" role="list">
+          <li class="media-rounded pop-photo pop-photo--arch"><Image src={cartWide} alt="The black Dovey Cakes Co. cart on the porch, logo on the front" widths={[360, 540, 720]} sizes="(min-width: 820px) 300px, 44vw" loading="lazy" /></li>
+          <li class="media-rounded pop-photo"><Image src={cookies1} alt="Wrapped chocolate cookies in a white bin" widths={[360, 540, 720]} sizes="(min-width: 820px) 300px, 44vw" loading="lazy" /></li>
+          <li class="media-rounded pop-photo"><Image src={cartClose} alt="Close-up of the Dovey Cakes Co. badge on the cart" widths={[360, 540, 720]} sizes="(min-width: 820px) 300px, 44vw" loading="lazy" /></li>
+          <li class="media-rounded pop-photo pop-photo--arch"><Image src={cookies2} alt="A mix of stuffed cookies in the cooler" widths={[360, 540, 720]} sizes="(min-width: 820px) 300px, 44vw" loading="lazy" /></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <CtaBand heading="Want a batch for your party?" body="Cookies and cake pops can be ordered ahead by the dozen. Send the date and the count and I'll quote it." />
+</BaseLayout>
+
+<style>
+  .pop-intro h1 {
+    margin-bottom: var(--sp-4);
+  }
+  .pop-main {
+    padding-block: var(--sp-6);
+  }
+  .pop-grid {
+    display: grid;
+    gap: var(--sp-7);
+  }
+  @media (min-width: 820px) {
+    .pop-grid {
+      grid-template-columns: 1fr 1.1fr;
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+  .pop-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-3);
+    max-width: 48ch;
+  }
+  .pop-list li {
+    position: relative;
+    padding-left: var(--sp-5);
+    color: var(--c-ink-soft);
+  }
+  .pop-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c-rose);
+  }
+  .pop-photos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-4);
+  }
+  .pop-photo img {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    width: 100%;
+  }
+  .pop-photo--arch {
+    border-radius: 140px 140px var(--radius) var(--radius);
+  }
+</style>

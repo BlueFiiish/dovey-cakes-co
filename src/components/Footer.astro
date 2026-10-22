@@ -1,0 +1,129 @@
+---
+import { Image } from 'astro:assets';
+import { business, emailDisplay, mailtoHref } from '../data/business';
+import { link } from '../lib/link';
+import badge from '../assets/logo/dovey-badge.png';
+import LaurelDivider from './LaurelDivider.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <LaurelDivider />
+    <div class="site-footer__grid">
+      <div class="site-footer__brand">
+        <Image src={badge} alt="" width={96} height={96} densities={[1, 2]} loading="lazy" class="site-footer__badge" />
+        <p class="site-footer__name">{business.name}</p>
+        <p class="site-footer__tag">{business.tagline}</p>
+      </div>
+
+      <div class="site-footer__col">
+        <h2 class="site-footer__h">Find me</h2>
+        <ul class="site-footer__list">
+          <li><a href={business.contact.tiktok.url} rel="me noopener" target="_blank">TikTok {business.contact.tiktok.handle}</a></li>
+          <li><a href={mailtoHref}>{emailDisplay}</a></li>
+          <li>{business.location.serviceArea}</li>
+        </ul>
+      </div>
+
+      <div class="site-footer__col">
+        <h2 class="site-footer__h">Ordering</h2>
+        <ul class="site-footer__list">
+          <li><a href={link('/order/')}>Start an order</a></li>
+          <li>Order {business.ordering.leadTimeDays}+ days ahead</li>
+          <li>{business.ordering.payments.join(' or ')}</li>
+          <li>{business.ordering.fulfillment}, {business.location.city}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="site-footer__base">
+      <p class="site-footer__disclosure">{business.cottageFoodDisclosure}</p>
+      <p class="site-footer__copy">&copy; {year} {business.name}. {business.location.city}.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--c-blush);
+    color: var(--c-ink);
+    padding-block: var(--sp-6) var(--sp-7);
+    margin-top: var(--sp-9);
+  }
+  .site-footer a {
+    color: var(--c-ink);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+  }
+  .site-footer a:hover {
+    color: var(--c-rose-dark);
+  }
+
+  .site-footer__grid {
+    display: grid;
+    gap: var(--sp-6);
+    margin-top: var(--sp-4);
+  }
+  @media (min-width: 720px) {
+    .site-footer__grid {
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: var(--sp-6);
+    }
+  }
+
+  .site-footer__badge {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    margin-bottom: var(--sp-3);
+    box-shadow: var(--shadow-card);
+  }
+  .site-footer__name {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    margin: 0 0 var(--sp-1);
+  }
+  .site-footer__tag {
+    color: var(--c-ink-soft);
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+
+  .site-footer__h {
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--c-rose-deep);
+    margin: 0 0 var(--sp-3);
+  }
+  .site-footer__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-2);
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+
+  .site-footer__base {
+    margin-top: var(--sp-7);
+    padding-top: var(--sp-5);
+    border-top: 1px solid color-mix(in srgb, var(--c-ink) 14%, transparent);
+    display: grid;
+    gap: var(--sp-2);
+  }
+  .site-footer__disclosure,
+  .site-footer__copy {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--c-ink-soft);
+  }
+</style>

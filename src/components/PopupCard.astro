@@ -1,0 +1,127 @@
+---
+// The "porch pop-up" card: dated when a pop-up is scheduled in popups.ts, generic otherwise.
+import { business } from '../data/business';
+import { popups } from '../data/popups';
+import { cookieMenu, cakePops } from '../data/menu';
+import { link } from '../lib/link';
+
+interface Props {
+  /** Show the cookie menu lines inside the card. */
+  withMenu?: boolean;
+}
+const { withMenu = true } = Astro.props;
+const next = popups.next;
+---
+
+<div class="popup-card reveal">
+  <div class="popup-card__when">
+    <p class="popup-card__label">{next ? 'Next porch pop-up' : 'Porch pop-ups'}</p>
+    {next ? (
+      <p class="popup-card__date">{next.dateLabel} &middot; {next.timeLabel}</p>
+    ) : (
+      <p class="popup-card__date">{popups.cadence}</p>
+    )}
+    <p class="popup-card__where">{next ? next.where : popups.howToFindOut}</p>
+  </div>
+
+  <div class="popup-card__body">
+    {withMenu && (
+      <>
+        <p class="popup-card__menu-title">{cookieMenu.title}</p>
+        <ul class="popup-card__menu" role="list">
+          {cookieMenu.items.map((c) => (
+            <li><strong>{c.name}</strong><span>{c.desc}</span></li>
+          ))}
+        </ul>
+      </>
+    )}
+    <p class="popup-card__pops">
+      Cake pops ${cakePops.priceEach} each or {cakePops.bundle.count} for ${cakePops.bundle.priceUsd}.
+      First come, first served.
+    </p>
+  </div>
+
+  <div class="popup-card__actions">
+    <a class="btn btn--primary" href={business.contact.tiktok.url} rel="noopener" target="_blank">Next date on TikTok</a>
+    <a class="btn btn--secondary" href={link('/menu/')}>Full menu</a>
+  </div>
+</div>
+
+<style>
+  .popup-card {
+    background: var(--c-white);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    padding: var(--sp-5);
+    display: grid;
+    gap: var(--sp-5);
+    box-shadow: var(--shadow-card);
+  }
+  @media (min-width: 900px) {
+    .popup-card {
+      grid-template-columns: 0.9fr 1.4fr auto;
+      align-items: center;
+      gap: var(--sp-6);
+      padding: var(--sp-6);
+    }
+  }
+  .popup-card__label {
+    margin: 0 0 var(--sp-1);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-rose-deep);
+  }
+  .popup-card__date {
+    margin: 0 0 var(--sp-2);
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 1.3rem + 1.4vw, 2.3rem);
+    line-height: 1.05;
+  }
+  .popup-card__where {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .popup-card__menu-title {
+    margin: 0 0 var(--sp-2);
+    font-weight: 700;
+    font-size: var(--fs-sm);
+    color: var(--c-ink);
+  }
+  .popup-card__menu {
+    list-style: none;
+    margin: 0 0 var(--sp-3);
+    padding: 0;
+    display: grid;
+    gap: var(--sp-1);
+    font-size: var(--fs-sm);
+  }
+  .popup-card__menu li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--sp-2);
+    color: var(--c-ink-soft);
+  }
+  .popup-card__menu strong {
+    color: var(--c-ink);
+    font-weight: 700;
+  }
+  .popup-card__pops {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .popup-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+  @media (min-width: 900px) {
+    .popup-card__actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>

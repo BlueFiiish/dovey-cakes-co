@@ -1,0 +1,190 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LaurelDivider from '../components/LaurelDivider.astro';
+import CakeCard from '../components/CakeCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { gallery, tagOrder, tagLabels, type CakeTag } from '../data/gallery';
+import { imageForSlug } from '../lib/galleryImages';
+import { link } from '../lib/link';
+
+const counts = Object.fromEntries(
+  tagOrder.map((t) => [t, gallery.filter((g) => g.tags.includes(t)).length])
+) as Record<CakeTag, number>;
+
+const title = 'Cakes';
+const description =
+  'Custom cakes by Dovey Cakes Co. in Rosenberg, TX: vintage heart cakes, character cakes, first birthdays, baby showers, baptisms and milestones, all made to order for pickup.';
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="section cakes-intro">
+    <div class="container">
+      <p class="eyebrow">Custom cakes</p>
+      <h1>Every one of these was somebody&rsquo;s idea</h1>
+      <p class="lead">
+        Real cakes I&rsquo;ve made in Rosenberg, no stock photos. Filter by the kind of cake
+        you&rsquo;re dreaming up, then send me yours.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--white cakes-main">
+    <div class="container">
+      <div class="filter" id="cake-filter">
+        <h2 class="visually-hidden">Filter cakes by type</h2>
+        <div class="filter__chips" role="group" aria-label="Filter cakes by type">
+          <button type="button" class="chip-btn is-active" data-filter="all" aria-pressed="true">
+            All <span class="chip-btn__n">{gallery.length}</span>
+          </button>
+          {tagOrder.map((t) => (
+            <button type="button" class="chip-btn" data-filter={t} aria-pressed="false">
+              {tagLabels[t]} <span class="chip-btn__n">{counts[t]}</span>
+            </button>
+          ))}
+        </div>
+        <p class="filter__status" aria-live="polite" id="filter-status">
+          Showing all {gallery.length} cakes
+        </p>
+      </div>
+
+      <ul class="cake-grid" role="list" id="cake-grid">
+        {gallery.map((c, i) => (
+          <li class="cake-grid__item" data-tags={c.tags.join(' ')}>
+            <CakeCard img={imageForSlug(c.slug)} title={c.title} note={c.note} tags={c.tags} arch={i % 3 === 1} eager={i < 4} priority={i === 0} />
+          </li>
+        ))}
+      </ul>
+
+      <p class="cake-empty" id="gallery-empty" hidden>
+        Nothing in that category yet. <a href={link('/order/')}>Request a custom one</a>.
+      </p>
+    </div>
+  </section>
+
+  <LaurelDivider />
+
+  <CtaBand heading="Don't see your cake?" body="Every cake here was custom. Yours can be too: send the theme, the date and the headcount for a quote." />
+</BaseLayout>
+
+<script>
+  const root = document.getElementById('cake-filter');
+  const grid = document.getElementById('cake-grid');
+  const status = document.getElementById('filter-status');
+  const empty = document.getElementById('gallery-empty');
+
+  if (root && grid && status && empty) {
+    const chips = Array.from(root.querySelectorAll<HTMLButtonElement>('.chip-btn'));
+    const items = Array.from(grid.querySelectorAll<HTMLElement>('.cake-grid__item'));
+
+    const apply = (filter: string, label: string) => {
+      let shown = 0;
+      items.forEach((item) => {
+        const tags = (item.dataset.tags || '').split(' ');
+        const match = filter === 'all' || tags.includes(filter);
+        item.hidden = !match;
+        if (match) shown++;
+      });
+      empty.hidden = shown !== 0;
+      status.textContent =
+        filter === 'all'
+          ? `Showing all ${shown} cakes`
+          : `Showing ${shown} ${shown === 1 ? 'cake' : 'cakes'}: ${label}`;
+    };
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        chips.forEach((c) => {
+          c.classList.remove('is-active');
+          c.setAttribute('aria-pressed', 'false');
+        });
+        chip.classList.add('is-active');
+        chip.setAttribute('aria-pressed', 'true');
+        const label = (chip.firstChild?.textContent || '').trim();
+        apply(chip.dataset.filter || 'all', label);
+      });
+    });
+  }
+</script>
+
+<style>
+  .cakes-intro {
+    padding-bottom: var(--sp-6);
+  }
+  .cakes-intro h1 {
+    margin-bottom: var(--sp-4);
+    max-width: 16ch;
+    text-wrap: balance;
+  }
+  .cakes-main {
+    padding-top: var(--sp-6);
+  }
+
+  .filter {
+    margin-bottom: var(--sp-6);
+  }
+  .filter__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+  .chip-btn {
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--c-ink-soft);
+    background: var(--c-cream);
+    border: 1.5px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    padding: 0.55rem 1rem;
+    min-height: 44px;
+    cursor: pointer;
+    transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+  }
+  .chip-btn:hover {
+    border-color: var(--c-ink);
+    color: var(--c-ink);
+  }
+  .chip-btn.is-active {
+    background: var(--c-ink);
+    border-color: var(--c-ink);
+    color: var(--c-cream);
+  }
+  .chip-btn__n {
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+    margin-left: 2px;
+  }
+  .chip-btn.is-active .chip-btn__n {
+    opacity: 0.85;
+  }
+  .filter__status {
+    margin: var(--sp-3) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+
+  .cake-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-5);
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 700px) {
+    .cake-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--sp-6) var(--sp-5);
+    }
+  }
+  @media (min-width: 1000px) {
+    .cake-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .cake-empty {
+    margin-top: var(--sp-6);
+    font-size: var(--fs-md);
+    color: var(--c-ink-soft);
+  }
+</style>

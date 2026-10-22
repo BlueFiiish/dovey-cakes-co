@@ -1,0 +1,47 @@
+---
+// SIGNATURE DEVICE - the laurel from her badge logo, drawn as a thin rose line with a
+// sprig of leaves at the centre. Used between sections and under the hero. Pure SVG, no JS.
+interface Props {
+  /** Decorative only. */
+  class?: string;
+  /** Tighter vertical room (e.g. inside a card). */
+  compact?: boolean;
+}
+const { class: className = '', compact = false } = Astro.props;
+const cls = ['laurel', compact ? 'laurel--compact' : '', className].filter(Boolean).join(' ');
+---
+
+<div class={cls} aria-hidden="true" role="presentation">
+  <svg viewBox="0 0 520 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+    <path d="M12 20 H196" />
+    <path d="M324 20 H508" />
+    <!-- left sprig -->
+    <path d="M250 20c-10-15-22-16-34-11 8 12 20 15 34 11z" />
+    <path d="M238 20c-9-9-19-11-30-8 6 9 17 11 30 8z" opacity="0.7" />
+    <!-- right sprig -->
+    <path d="M270 20c10-15 22-16 34-11-8 12-20 15-34 11z" />
+    <path d="M282 20c9-9 19-11 30-8-6 9-17 11-30 8z" opacity="0.7" />
+    <!-- berry -->
+    <circle cx="260" cy="20" r="2.6" fill="currentColor" stroke="none" />
+  </svg>
+</div>
+
+<style>
+  .laurel {
+    display: block;
+    width: min(100%, 560px);
+    margin-inline: auto;
+    padding-block: var(--sp-5);
+    color: var(--c-rose);
+    line-height: 0;
+  }
+  .laurel--compact {
+    padding-block: var(--sp-3);
+    width: min(100%, 360px);
+  }
+  .laurel svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>

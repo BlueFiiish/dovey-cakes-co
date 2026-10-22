@@ -1,0 +1,372 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LaurelDivider from '../components/LaurelDivider.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { business } from '../data/business';
+import { flavors, fillings, shapes, tiers, servingChart, servingChartNote, addOns, cookieMenu, cakePops } from '../data/menu';
+import { link } from '../lib/link';
+import cookiesPhoto from '../assets/popup/cookies-in-cooler-2.jpg';
+
+const title = 'Cookies, cake pops & cake flavors';
+const description =
+  'The Dovey Cakes Co. menu: the seasonal stuffed-cookie menu, cake pops by the piece, and cake flavors, fillings, shapes and serving sizes for custom orders in Rosenberg, TX.';
+
+const base = flavors.filter((f) => f.upchargeUsd === 0);
+const premium = flavors.filter((f) => f.upchargeUsd === 5);
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="section menu-intro">
+    <div class="container">
+      <p class="eyebrow">Menu</p>
+      <h1>Cookies, cake pops &amp; cake flavors</h1>
+      <p class="lead">
+        Cookies and cake pops are sold at porch pop-ups and by the batch. Cakes are built to order:
+        pick a flavor, a filling, a shape and a size, and I&rsquo;ll quote the rest.
+      </p>
+    </div>
+  </section>
+
+  <!-- COOKIES ------------------------------------------------------------- -->
+  <section class="section section--white" id="cookies">
+    <div class="container cookies">
+      <div class="reveal">
+        <p class="eyebrow">{cookieMenu.season} edition</p>
+        <h2>{cookieMenu.title}</h2>
+        <ul class="cookie-list" role="list">
+          {cookieMenu.items.map((c) => (
+            <li class="cookie">
+              <h3 class="cookie__name">{c.name}</h3>
+              <p class="cookie__desc">{c.desc}</p>
+            </li>
+          ))}
+        </ul>
+        <p class="menu-note">{cookieMenu.note}</p>
+      </div>
+      <div class="cookies__photo reveal">
+        <div class="media-rounded cookies__img">
+          <Image src={cookiesPhoto} alt="Stuffed cookies wrapped and ready in the pop-up cooler" widths={[360, 540, 720]} sizes="(min-width: 820px) 380px, 88vw" loading="lazy" />
+        </div>
+        <div class="pops-card">
+          <p class="eyebrow">Cake pops</p>
+          <p class="pops-card__price">
+            <strong>${cakePops.priceEach}</strong> each &middot; <strong>{cakePops.bundle.count} for ${cakePops.bundle.priceUsd}</strong>
+          </p>
+          <p class="menu-note">{cakePops.note}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <LaurelDivider />
+
+  <!-- CAKE FLAVORS + FILLINGS --------------------------------------------- -->
+  <section class="section" id="cakes">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">Custom cakes</p>
+        <h2>Flavors &amp; fillings</h2>
+      </header>
+      <div class="menu-cols">
+        <div class="reveal">
+          <h3 class="mini-h">Cake flavors</h3>
+          <ul class="taglist" role="list">
+            {base.map((f) => <li class="tag">{f.name}</li>)}
+            {premium.map((f) => (
+              <li class="tag">{f.name} <span class="tag__up">+${f.upchargeUsd}</span></li>
+            ))}
+            <li class="tag tag--custom">Custom <span class="tag__up">quoted</span></li>
+          </ul>
+          <p class="menu-note">Flavors marked <strong>+$5</strong> carry a small upcharge.</p>
+        </div>
+        <div class="reveal">
+          <h3 class="mini-h">Fillings</h3>
+          <ul class="taglist" role="list">
+            {fillings.filter((f) => f !== 'Custom').map((f) => <li class="tag">{f}</li>)}
+            <li class="tag tag--custom">Custom <span class="tag__up">quoted</span></li>
+          </ul>
+          <p class="menu-note">Fresas con crema and dulce de leche mousse are the favorites.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHAPES + SIZES ------------------------------------------------------ -->
+  <section class="section section--blush" id="sizes">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">Shapes &amp; sizes</p>
+        <h2>How big should it be?</h2>
+        <p class="lead">Cakes come {shapes.join(', ').toLowerCase()} and up to three tiers. Match the chart to your headcount.</p>
+      </header>
+
+      <div class="shapes-tiers reveal">
+        <div>
+          <h3 class="mini-h">Shapes</h3>
+          <ul class="taglist" role="list">
+            {shapes.map((s) => <li class="tag">{s}</li>)}
+          </ul>
+        </div>
+        <div>
+          <h3 class="mini-h">Tiers</h3>
+          <ul class="taglist" role="list">
+            {tiers.map((t) => <li class="tag">{t}</li>)}
+          </ul>
+        </div>
+      </div>
+
+      <div class="table-wrap reveal">
+        <table class="chart">
+          <caption class="visually-hidden">Approximate servings by cake size and number of layers</caption>
+          <thead>
+            <tr>
+              <th scope="col">Size</th>
+              <th scope="col">1 layer</th>
+              <th scope="col">2 layers</th>
+              <th scope="col">3 layers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {servingChart.map((row) => (
+              <tr>
+                <th scope="row">{row.size}</th>
+                <td>{row.layers1}</td>
+                <td>{row.layers2}</td>
+                <td>{row.layers3}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="menu-note">{servingChartNote}</p>
+    </div>
+  </section>
+
+  <!-- POLICY -------------------------------------------------------------- -->
+  <section class="section" id="policy">
+    <div class="container">
+      <header class="sec-head reveal">
+        <p class="eyebrow">Good to know</p>
+        <h2>Ordering &amp; policy</h2>
+      </header>
+      <dl class="policy reveal">
+        <div class="policy__row"><dt>Lead time</dt><dd>Please order at least {business.ordering.leadTimeDays} days ahead.</dd></div>
+        <div class="policy__row"><dt>Rush orders</dt><dd>Under a week out adds a ${addOns.rushOrderUsd} rush fee, subject to availability.</dd></div>
+        <div class="policy__row"><dt>Deposit</dt><dd>{business.ordering.deposit}.</dd></div>
+        <div class="policy__row"><dt>Payments</dt><dd>{business.ordering.payments.join(' or ')}. Cash at pop-ups.</dd></div>
+        <div class="policy__row"><dt>Pickup</dt><dd>{business.ordering.fulfillment}, in {business.location.city}. The pickup spot is shared once your order is confirmed.</dd></div>
+        <div class="policy__row"><dt>Allergens</dt><dd>Everything is made in one kitchen that handles wheat, dairy, eggs and nuts. Ask before ordering if that matters for you.</dd></div>
+      </dl>
+      <p class="sec-cta reveal">
+        <a class="btn btn--primary" href={link('/order/')}>Start an order</a>
+      </p>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .menu-intro h1 {
+    margin-bottom: var(--sp-4);
+    max-width: 16ch;
+    text-wrap: balance;
+  }
+
+  .cookies {
+    display: grid;
+    gap: var(--sp-7);
+  }
+  @media (min-width: 820px) {
+    .cookies {
+      grid-template-columns: 1.2fr 1fr;
+      gap: var(--sp-8);
+      align-items: start;
+    }
+  }
+  .cookie-list {
+    list-style: none;
+    margin: 0 0 var(--sp-4);
+    padding: 0;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--c-line);
+  }
+  .cookie {
+    padding-block: var(--sp-4);
+    border-bottom: 1px solid var(--c-line);
+  }
+  .cookie__name {
+    margin: 0 0 var(--sp-1);
+    font-size: 1.5rem;
+  }
+  .cookie__desc {
+    margin: 0;
+    color: var(--c-ink-soft);
+    font-size: var(--fs-sm);
+  }
+  .cookies__photo {
+    display: grid;
+    gap: var(--sp-5);
+  }
+  .cookies__img {
+    border-radius: 160px 160px var(--radius) var(--radius);
+  }
+  .cookies__img img {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    width: 100%;
+  }
+  .pops-card {
+    background: var(--c-cream);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    padding: var(--sp-5);
+  }
+  .pops-card__price {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    margin: 0 0 var(--sp-2);
+  }
+  .pops-card__price strong {
+    font-weight: 400;
+    color: var(--c-rose-deep);
+  }
+
+  .menu-cols {
+    display: grid;
+    gap: var(--sp-7);
+  }
+  @media (min-width: 760px) {
+    .menu-cols {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-8);
+    }
+  }
+  .taglist {
+    list-style: none;
+    margin: 0 0 var(--sp-4);
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+  .tag {
+    background: var(--c-white);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    padding: var(--sp-2) var(--sp-4);
+    font-size: var(--fs-sm);
+    color: var(--c-ink);
+  }
+  .tag--custom {
+    border-style: dashed;
+    color: var(--c-ink-soft);
+  }
+  .tag__up {
+    color: var(--c-rose-deep);
+    font-weight: 700;
+    font-size: var(--fs-xs);
+  }
+  .tag--custom .tag__up {
+    color: var(--c-ink-soft);
+    font-weight: 600;
+  }
+  .menu-note {
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+    margin: 0;
+  }
+  .mini-h {
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-rose-deep);
+    margin: 0 0 var(--sp-3);
+  }
+  .shapes-tiers {
+    display: grid;
+    gap: var(--sp-6);
+    margin-bottom: var(--sp-7);
+  }
+  @media (min-width: 560px) {
+    .shapes-tiers {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius);
+  }
+  .chart {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--c-white);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-width: 360px;
+    font-variant-numeric: tabular-nums;
+  }
+  .chart th,
+  .chart td {
+    padding: var(--sp-3) var(--sp-4);
+    text-align: center;
+    border-bottom: 1px solid var(--c-line);
+  }
+  .chart thead th {
+    background: var(--c-ink);
+    color: var(--c-cream);
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+  .chart tbody th[scope='row'] {
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    background: var(--c-cream);
+  }
+  .chart tbody tr:last-child th,
+  .chart tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .policy {
+    margin: 0;
+    display: grid;
+    max-width: 62ch;
+    border-top: 1px solid var(--c-line);
+  }
+  .policy__row {
+    display: grid;
+    gap: var(--sp-1);
+    padding-block: var(--sp-4);
+    border-bottom: 1px solid var(--c-line);
+  }
+  @media (min-width: 560px) {
+    .policy__row {
+      grid-template-columns: 9rem 1fr;
+      gap: var(--sp-5);
+      align-items: baseline;
+    }
+  }
+  .policy dt {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--c-rose-deep);
+  }
+  .policy dd {
+    margin: 0;
+  }
+  .sec-cta {
+    margin: var(--sp-7) 0 0;
+  }
+</style>

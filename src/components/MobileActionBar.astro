@@ -1,0 +1,55 @@
+---
+// Sticky bottom bar, phones only. global.css reserves 72px of bottom padding for it.
+import { link } from '../lib/link';
+import { business } from '../data/business';
+---
+
+<nav class="action-bar" aria-label="Quick actions">
+  <a class="action-bar__btn action-bar__btn--primary" href={link('/order/')}>Start an order</a>
+  <a class="action-bar__btn action-bar__btn--ghost" href={business.contact.tiktok.url} rel="noopener" target="_blank">TikTok</a>
+</nav>
+
+<style>
+  .action-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 120;
+    display: flex;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    background: color-mix(in srgb, var(--c-cream) 94%, transparent);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--c-line);
+  }
+  .action-bar__btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    border: 2px solid transparent;
+  }
+  .action-bar__btn--primary {
+    background: var(--c-rose-deep);
+    color: var(--c-white);
+    flex: 1.6;
+  }
+  .action-bar__btn--ghost {
+    background: var(--c-white);
+    color: var(--c-ink);
+    border-color: var(--c-line);
+  }
+
+  @media (min-width: 880px) {
+    .action-bar {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,81 @@
+---
+// SEO head: title/description, canonical, Open Graph, Twitter card, Bakery JSON-LD.
+import { business } from '../data/business';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+const BASE = import.meta.env.BASE_URL;
+const {
+  title = business.name,
+  description = business.shortBlurb,
+  ogImage = `${BASE}og-image.png`,
+} = Astro.props;
+
+const pageTitle =
+  title === business.name
+    ? `${business.name} - Custom Cakes, Cookies & Cake Pops in ${business.location.city}`
+    : `${title} - ${business.name}`;
+
+const site = Astro.site ?? new URL('https://bluefiiish.github.io');
+const canonical = new URL(Astro.url.pathname, site).href;
+const ogImageUrl = new URL(ogImage, site).href;
+const homeUrl = new URL(BASE, site).href;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Bakery',
+  name: business.name,
+  description: business.shortBlurb,
+  email: business.contact.email,
+  url: homeUrl,
+  image: ogImageUrl,
+  sameAs: [business.contact.tiktok.url],
+  priceRange: '$$',
+  servesCuisine: 'Cakes, cookies, cake pops',
+  areaServed: business.location.serviceArea,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Rosenberg',
+    addressRegion: 'TX',
+    addressCountry: 'US',
+  },
+  makesOffer: {
+    '@type': 'Offer',
+    itemOffered: {
+      '@type': 'Product',
+      name: 'Custom cakes, cookies and cake pops',
+      description:
+        'Made-to-order vintage buttercream and character cakes, seasonal cookies and cake pops for pickup in Rosenberg, TX.',
+    },
+  },
+};
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script is:inline>document.documentElement.classList.add('js');</script>
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+<link rel="icon" href={`${BASE}favicon-64.png`} type="image/png" sizes="64x64" />
+<link rel="apple-touch-icon" href={`${BASE}apple-touch-icon.png`} />
+<meta name="theme-color" content="#fbf4ef" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={business.name} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:locale" content="en_US" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
