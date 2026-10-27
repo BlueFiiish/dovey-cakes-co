@@ -1,0 +1,157 @@
+---
+// Flat cake tile: the cut-out fills the cell edge to edge (no mat padding). The caption is a
+// soft pill over the bottom of the tile: always visible on touch screens, hover-only on
+// pointer devices so the cake is what you see. White tile on cream, same rule as the mats.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  img: ImageMetadata;
+  title: string;
+  note?: string;
+  slug: string;
+  href: string;
+  /** Double-size cell in a mixed grid (the parent li must span 2x2). */
+  feature?: boolean;
+  /** Arch-topped tile, alternated for the Dove & Laurel rhythm. */
+  arch?: boolean;
+  eager?: boolean;
+  priority?: boolean;
+  sizes?: string;
+  /** Give the tile `id={slug}` so /cakes/#slug deep links land on it. */
+  anchor?: boolean;
+  /** Large image URL for the lightbox (cakes page). */
+  full?: string;
+  tags?: string;
+}
+const {
+  img, title, note, slug, href,
+  feature = false, arch = false, eager = false, priority = false, anchor = false, full, tags,
+  sizes = feature
+    ? '(min-width: 1000px) 600px, (min-width: 720px) 66vw, 92vw'
+    : '(min-width: 1000px) 290px, (min-width: 720px) 32vw, 46vw',
+} = Astro.props;
+const alt = note ? `${title} cake - ${note}` : `${title} cake by Dovey Cakes Co.`;
+---
+
+<a
+  class:list={['tile', { 'tile--feature': feature, 'tile--arch': arch }]}
+  href={href}
+  id={anchor ? slug : undefined}
+  data-slug={slug}
+  data-title={title}
+  data-note={note}
+  data-full={full}
+  data-tags={tags}
+>
+  <figure class="tile__fig">
+    <Image
+      src={img}
+      alt={alt}
+      widths={feature ? [480, 720, 960, 1200] : [320, 480, 640, 800]}
+      sizes={sizes}
+      loading={eager ? 'eager' : 'lazy'}
+      fetchpriority={priority ? 'high' : 'auto'}
+    />
+    <figcaption class="tile__cap">
+      <span class="tile__title">{title}</span>
+      {note && <span class="tile__note">{note}</span>}
+    </figcaption>
+  </figure>
+</a>
+
+<style>
+  .tile {
+    position: relative;
+    display: block;
+    height: 100%;
+    background: var(--c-mat);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+  .tile--arch {
+    border-radius: var(--radius-arch);
+  }
+  .tile__fig {
+    margin: 0;
+    height: 100%;
+  }
+  .tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+  }
+  /* The feature tile takes its height from the two grid rows it spans, never from the image. */
+  .tile--feature .tile__fig {
+    position: absolute;
+    inset: 0;
+  }
+  .tile--feature img {
+    aspect-ratio: auto;
+  }
+
+  .tile__cap {
+    position: absolute;
+    left: var(--sp-3);
+    bottom: var(--sp-3);
+    max-width: calc(100% - var(--sp-3) * 2);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: var(--sp-2) var(--sp-3);
+    background: color-mix(in srgb, var(--c-white) 92%, transparent);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-sm);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .tile__title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1.15;
+    color: var(--c-ink);
+  }
+  .tile__note {
+    font-size: var(--fs-xs);
+    line-height: 1.35;
+    color: var(--c-ink-soft);
+  }
+  .tile--feature .tile__title {
+    font-size: 1.6rem;
+  }
+  .tile--feature .tile__note {
+    font-size: var(--fs-sm);
+  }
+
+  @media (hover: hover) {
+    .tile__cap {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    .tile:hover .tile__cap,
+    .tile:focus-visible .tile__cap {
+      opacity: 1;
+      transform: none;
+    }
+    .tile:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tile:hover {
+      transform: none;
+    }
+  }
+  .tile.is-hit {
+    outline: 3px solid var(--c-rose-deep);
+    outline-offset: 4px;
+  }
+</style>

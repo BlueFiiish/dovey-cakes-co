@@ -1,0 +1,250 @@
+---
+// Site search: a native <dialog> opened by any [data-open-search] button (the header). The
+// index is a static JSON built from the data files (search-index.json.ts), fetched on first
+// open. Matching is plain substring-AND over title, subtitle and keywords, title hits ranked
+// first. No library, no server.
+const BASE = import.meta.env.BASE_URL;
+const indexUrl = `${BASE}search-index.json`;
+---
+
+<dialog id="site-search" class="search" data-index={indexUrl} aria-label="Search the site">
+  <form method="dialog" class="search__box">
+    <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" /><path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+    <label for="search-input" class="visually-hidden">Search cakes, flavors and cookies</label>
+    <input id="search-input" type="search" placeholder="Search cakes, flavors, cookies…" autocomplete="off" spellcheck="false" />
+    <button type="submit" class="search__close" aria-label="Close search">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+    </button>
+  </form>
+  <ul class="search__results" id="search-results" role="list"></ul>
+  <p class="search__hint" id="search-hint">Try &ldquo;vintage heart&rdquo;, &ldquo;Stitch&rdquo;, &ldquo;tres leches&rdquo; or &ldquo;cake pops&rdquo;.</p>
+</dialog>
+
+<script>
+  interface Item { t: string; s?: string; k?: string; u: string; g: string }
+
+  const dlg = document.getElementById('site-search') as HTMLDialogElement | null;
+  const input = document.getElementById('search-input') as HTMLInputElement | null;
+  const list = document.getElementById('search-results');
+  const hint = document.getElementById('search-hint');
+
+  if (dlg && input && list && hint && typeof dlg.showModal === 'function') {
+    let index: Item[] | null = null;
+    let loading: Promise<Item[]> | null = null;
+
+    const load = () => {
+      if (index) return Promise.resolve(index);
+      if (!loading) {
+        loading = fetch(dlg.dataset.index || '')
+          .then((r) => r.json())
+          .then((data: Item[]) => (index = data))
+          .catch(() => (index = []));
+      }
+      return loading;
+    };
+
+    const score = (item: Item, tokens: string[]) => {
+      const title = item.t.toLowerCase();
+      const hay = `${title} ${item.s ?? ''} ${item.k ?? ''}`.toLowerCase();
+      let sc = 0;
+      for (const tok of tokens) {
+        if (!hay.includes(tok)) return 0;
+        sc += title.includes(tok) ? 3 : 1;
+        if (title.startsWith(tok)) sc += 2;
+      }
+      return sc;
+    };
+
+    const render = (q: string) => {
+      const tokens = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      list.replaceChildren();
+      if (!tokens.length || !index) {
+        hint.textContent = 'Try “vintage heart”, “Stitch”, “tres leches” or “cake pops”.';
+        hint.hidden = false;
+        return;
+      }
+      const hits = index
+        .map((item) => ({ item, sc: score(item, tokens) }))
+        .filter((h) => h.sc > 0)
+        .sort((a, b) => b.sc - a.sc)
+        .slice(0, 10);
+      if (!hits.length) {
+        hint.textContent = `Nothing for “${q.trim()}”. Every cake is custom, so send the idea through the order form.`;
+        hint.hidden = false;
+        return;
+      }
+      hint.hidden = true;
+      for (const { item } of hits) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = item.u;
+        if (/^https?:/.test(item.u)) {
+          a.target = '_blank';
+          a.rel = 'noopener';
+        }
+        const t = document.createElement('span');
+        t.className = 'r__t';
+        t.textContent = item.t;
+        const g = document.createElement('span');
+        g.className = 'r__g';
+        g.textContent = item.g;
+        a.append(t);
+        if (item.s) {
+          const s = document.createElement('span');
+          s.className = 'r__s';
+          s.textContent = item.s;
+          a.append(s);
+        }
+        a.append(g);
+        li.append(a);
+        list.append(li);
+      }
+    };
+
+    const open = () => {
+      dlg.showModal();
+      input.focus();
+      load().then(() => render(input.value));
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-open-search]').forEach((btn) => btn.addEventListener('click', open));
+    input.addEventListener('input', () => render(input.value));
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+    // Arrow keys move between the input and the results (scoped to the dialog).
+    dlg.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const links = Array.from(list.querySelectorAll<HTMLAnchorElement>('a'));
+      if (!links.length) return;
+      const i = links.indexOf(document.activeElement as HTMLAnchorElement);
+      e.preventDefault();
+      if (e.key === 'ArrowDown') (i < 0 ? links[0] : links[Math.min(i + 1, links.length - 1)]).focus();
+      else if (i <= 0) input.focus();
+      else links[i - 1].focus();
+    });
+    // Same-page hash links (search from the cakes page) should still close the dialog.
+    list.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) dlg.close();
+    });
+  }
+</script>
+
+<style>
+  .search {
+    width: min(92vw, 620px);
+    margin: 8vh auto 0;
+    padding: 0;
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    background: var(--c-white);
+    color: var(--c-ink);
+    box-shadow: var(--shadow-lift);
+    overflow: hidden;
+  }
+  .search::backdrop {
+    background: rgba(74, 47, 42, 0.45);
+    backdrop-filter: blur(2px);
+  }
+  .search__box {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--c-line);
+    margin: 0;
+  }
+  .search__icon {
+    width: 22px;
+    height: 22px;
+    color: var(--c-rose-deep);
+    flex: none;
+  }
+  .search__box input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 1.1rem;
+    color: var(--c-ink);
+    background: transparent;
+    border: 0;
+    min-height: 48px;
+  }
+  .search__box input:focus {
+    outline: none;
+  }
+  .search__box input::placeholder {
+    color: var(--c-placeholder);
+  }
+  .search__close {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c-cream);
+    color: var(--c-ink);
+    cursor: pointer;
+  }
+  .search__close svg {
+    width: 20px;
+    height: 20px;
+  }
+  .search__close:hover {
+    background: var(--c-blush);
+  }
+  .search__results {
+    list-style: none;
+    margin: 0;
+    padding: var(--sp-2);
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .search__results a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 't g' 's g';
+    column-gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-3);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--c-ink);
+    min-height: 48px;
+    align-items: center;
+  }
+  .search__results a:hover,
+  .search__results a:focus-visible {
+    background: var(--c-cream);
+  }
+  .r__t {
+    grid-area: t;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    line-height: 1.15;
+  }
+  .r__s {
+    grid-area: s;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .r__g {
+    grid-area: g;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--c-rose-deep);
+    white-space: nowrap;
+  }
+  .search__hint {
+    margin: 0;
+    padding: var(--sp-4) var(--sp-5) var(--sp-5);
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .search__hint[hidden] {
+    display: none;
+  }
+</style>

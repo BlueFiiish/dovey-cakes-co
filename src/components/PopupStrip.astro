@@ -1,0 +1,129 @@
+---
+// Home-page strip for the porch pop-ups: two cart photos, the cookie menu of the month as
+// pills, cake-pop pricing and the TikTok link. Replaces the full PopupCard on the home page
+// so the cakes come first; /pop-ups/ keeps the full card.
+import { Image } from 'astro:assets';
+import { business } from '../data/business';
+import { popups } from '../data/popups';
+import { cookieMenu, cakePops } from '../data/menu';
+import { link } from '../lib/link';
+import cookiesPhoto from '../assets/popup/cookies-in-cooler-1.jpg';
+import cartPhoto from '../assets/popup/cart-front-wide.jpg';
+
+const next = popups.next;
+---
+
+<section class="section popstrip" id="pop-ups">
+  <div class="container popstrip__inner">
+    <div class="popstrip__photos reveal">
+      <div class="media-rounded popstrip__photo popstrip__photo--arch">
+        <Image src={cartPhoto} alt="The black Dovey Cakes Co. cart set up on the porch for a pop-up" widths={[360, 540, 720]} sizes="(min-width: 820px) 300px, 50vw" loading="lazy" />
+      </div>
+      <div class="media-rounded popstrip__photo popstrip__photo--b">
+        <Image src={cookiesPhoto} alt="Individually wrapped stuffed cookies in a white bin at the pop-up" widths={[360, 540, 720]} sizes="(min-width: 820px) 260px, 42vw" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="popstrip__copy reveal">
+      <p class="eyebrow">
+        {next ? `Next porch pop-up: ${next.dateLabel}, ${next.timeLabel}` : `Porch pop-ups, ${popups.cadence.toLowerCase()}`}
+      </p>
+      <h2>Cookies &amp; cake pops, straight from the cart</h2>
+      <p class="lead">
+        Cake pops are ${cakePops.priceEach} each or {cakePops.bundle.count} for ${cakePops.bundle.priceUsd}.
+        {next ? next.where : popups.howToFindOut}
+      </p>
+      <p class="popstrip__menu-title">{cookieMenu.title}</p>
+      <ul class="popstrip__menu" role="list">
+        {cookieMenu.items.map((c) => <li title={c.desc}>{c.name}</li>)}
+      </ul>
+      <div class="popstrip__actions">
+        <a class="btn btn--primary" href={business.contact.tiktok.url} rel="noopener" target="_blank">Next date on TikTok</a>
+        <a class="btn btn--secondary" href={link('/menu/')}>See the menu</a>
+        <a class="link-arrow" href={link('/pop-ups/')}>How pop-ups work &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .popstrip {
+    padding-block: var(--sp-7);
+  }
+  .popstrip__inner {
+    display: grid;
+    gap: var(--sp-6);
+  }
+  @media (min-width: 820px) {
+    .popstrip {
+      padding-block: var(--sp-8);
+    }
+    .popstrip__inner {
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: var(--sp-8);
+      align-items: center;
+    }
+  }
+  .popstrip__photos {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: var(--sp-4);
+    align-items: end;
+  }
+  .popstrip__photo img {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+  }
+  .popstrip__photo--arch {
+    border-radius: 140px 140px var(--radius) var(--radius);
+  }
+  .popstrip__photo--b {
+    margin-bottom: var(--sp-7);
+  }
+  .popstrip__copy h2 {
+    max-width: 16ch;
+    text-wrap: balance;
+  }
+  .popstrip__menu-title {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-cocoa);
+  }
+  .popstrip__menu {
+    list-style: none;
+    margin: 0 0 var(--sp-5);
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+  }
+  .popstrip__menu li {
+    background: var(--c-white);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    padding: var(--sp-2) var(--sp-4);
+    font-size: var(--fs-sm);
+    color: var(--c-ink);
+  }
+  .popstrip__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-3) var(--sp-4);
+  }
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .link-arrow:hover {
+    text-decoration: underline;
+  }
+</style>

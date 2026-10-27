@@ -173,6 +173,17 @@ const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
   const success = document.getElementById('form-success');
   const errorEl = document.getElementById('form-error');
 
+  // "Order one like this" from the cakes lightbox: /order/?cake=<title> prefills the cake fields.
+  const wanted = new URLSearchParams(location.search).get('cake');
+  if (wanted) {
+    const type = document.getElementById('f-orderType') as HTMLSelectElement | null;
+    const theme = document.getElementById('f-colorTheme') as HTMLInputElement | null;
+    const details = document.getElementById('f-details') as HTMLTextAreaElement | null;
+    if (type) type.value = 'Custom cake';
+    if (theme && !theme.value) theme.value = `Like the "${wanted}" cake`;
+    if (details && !details.value) details.value = `I'd like something like the "${wanted}" cake on your site.`;
+  }
+
   if (form && success && errorEl) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

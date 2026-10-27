@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LaurelDivider from '../components/LaurelDivider.astro';
-import CakeCard from '../components/CakeCard.astro';
+import CakeTile from '../components/CakeTile.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { business } from '../data/business';
 import { gallery } from '../data/gallery';
@@ -67,7 +67,7 @@ const aboutCakes = aboutSlugs.map((s) => gallery.find((g) => g.slug === s)!).fil
         <ul class="about-cakes" role="list">
           {aboutCakes.map((c, i) => (
             <li>
-              <CakeCard img={imageForSlug(c.slug)} title={c.title} note={c.note} tags={c.tags} arch={i === 0} />
+              <CakeTile img={imageForSlug(c.slug)} title={c.title} note={c.note} slug={c.slug} href={link(`/cakes/#${c.slug}`)} arch={i === 0} />
             </li>
           ))}
         </ul>

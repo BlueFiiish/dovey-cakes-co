@@ -1,7 +1,10 @@
 ---
+// The gallery: every cake as a flat tile, filter chips synced to ?tag=, #slug deep links from
+// search and the home page, and a lightbox with a big view + "Order one like this".
+import { getImage } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LaurelDivider from '../components/LaurelDivider.astro';
-import CakeCard from '../components/CakeCard.astro';
+import CakeTile from '../components/CakeTile.astro';
 import CtaBand from '../components/CtaBand.astro';
 import { gallery, tagOrder, tagLabels, type CakeTag } from '../data/gallery';
 import { imageForSlug } from '../lib/galleryImages';
@@ -11,9 +14,18 @@ const counts = Object.fromEntries(
   tagOrder.map((t) => [t, gallery.filter((g) => g.tags.includes(t)).length])
 ) as Record<CakeTag, number>;
 
+// A 1200px WebP of every cake for the lightbox.
+const tiles = await Promise.all(
+  gallery.map(async (c) => ({
+    ...c,
+    full: (await getImage({ src: imageForSlug(c.slug), width: 1200, format: 'webp' })).src,
+  }))
+);
+
 const title = 'Cakes';
 const description =
   'Custom cakes by Dovey Cakes Co. in Rosenberg, TX: vintage heart cakes, character cakes, first birthdays, baby showers, baptisms and milestones, all made to order for pickup.';
+const orderBase = link('/order/');
 ---
 
 <BaseLayout title={title} description={description}>
@@ -22,13 +34,13 @@ const description =
       <p class="eyebrow">Custom cakes</p>
       <h1>Every one of these was somebody&rsquo;s idea</h1>
       <p class="lead">
-        Real cakes I&rsquo;ve made in Rosenberg, no stock photos. Filter by the kind of cake
-        you&rsquo;re dreaming up, then send me yours.
+        Real cakes made in Rosenberg, no stock photos. Filter by the kind of cake you&rsquo;re
+        dreaming up, tap one to see it big, then send me yours.
       </p>
     </div>
   </section>
 
-  <section class="section section--white cakes-main">
+  <section class="section cakes-main">
     <div class="container">
       <div class="filter" id="cake-filter">
         <h2 class="visually-hidden">Filter cakes by type</h2>
@@ -47,10 +59,22 @@ const description =
         </p>
       </div>
 
-      <ul class="cake-grid" role="list" id="cake-grid">
-        {gallery.map((c, i) => (
+      <ul class="cake-grid" role="list" id="cake-grid" data-order-base={orderBase}>
+        {tiles.map((c, i) => (
           <li class="cake-grid__item" data-tags={c.tags.join(' ')}>
-            <CakeCard img={imageForSlug(c.slug)} title={c.title} note={c.note} tags={c.tags} arch={i % 3 === 1} eager={i < 4} priority={i === 0} />
+            <CakeTile
+              img={imageForSlug(c.slug)}
+              title={c.title}
+              note={c.note}
+              slug={c.slug}
+              href={`#${c.slug}`}
+              full={c.full}
+              tags={c.tags.join(' ')}
+              arch={i % 3 === 1}
+              eager={i < 4}
+              priority={i === 0}
+              anchor
+            />
           </li>
         ))}
       </ul>
@@ -64,6 +88,31 @@ const description =
   <LaurelDivider />
 
   <CtaBand heading="Don't see your cake?" body="Every cake here was custom. Yours can be too: send the theme, the date and the headcount for a quote." />
+
+  <!-- LIGHTBOX ----------------------------------------------------------- -->
+  <dialog id="lightbox" class="lb" aria-labelledby="lb-title">
+    <button type="button" class="lb__close" id="lb-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+    </button>
+    <div class="lb__media">
+      <img id="lb-img" alt="" />
+    </div>
+    <div class="lb__meta">
+      <p class="lb__title" id="lb-title"></p>
+      <p class="lb__note" id="lb-note"></p>
+      <div class="lb__actions">
+        <a class="btn btn--primary" id="lb-order" href={orderBase}>Order one like this</a>
+        <div class="lb__nav">
+          <button type="button" class="lb__arrow" id="lb-prev" aria-label="Previous cake">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+          <button type="button" class="lb__arrow" id="lb-next" aria-label="Next cake">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </dialog>
 </BaseLayout>
 
 <script>
@@ -72,12 +121,31 @@ const description =
   const status = document.getElementById('filter-status');
   const empty = document.getElementById('gallery-empty');
 
+  const lb = document.getElementById('lightbox') as HTMLDialogElement | null;
+  const lbImg = document.getElementById('lb-img') as HTMLImageElement | null;
+  const lbTitle = document.getElementById('lb-title');
+  const lbNote = document.getElementById('lb-note');
+  const lbOrder = document.getElementById('lb-order') as HTMLAnchorElement | null;
+  const lbPrev = document.getElementById('lb-prev');
+  const lbNext = document.getElementById('lb-next');
+  const lbClose = document.getElementById('lb-close');
+
   if (root && grid && status && empty) {
     const chips = Array.from(root.querySelectorAll<HTMLButtonElement>('.chip-btn'));
     const items = Array.from(grid.querySelectorAll<HTMLElement>('.cake-grid__item'));
+    const tiles = Array.from(grid.querySelectorAll<HTMLAnchorElement>('a.tile'));
+    const orderBase = grid.dataset.orderBase || '/order/';
 
-    const apply = (filter: string, label: string) => {
+    // ---- Filter, synced to ?tag= ---------------------------------------
+    const apply = (filter: string, push = true) => {
       let shown = 0;
+      let label = 'All';
+      chips.forEach((c) => {
+        const on = (c.dataset.filter || 'all') === filter;
+        c.classList.toggle('is-active', on);
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (on) label = (c.firstChild?.textContent || '').trim();
+      });
       items.forEach((item) => {
         const tags = (item.dataset.tags || '').split(' ');
         const match = filter === 'all' || tags.includes(filter);
@@ -86,29 +154,103 @@ const description =
       });
       empty.hidden = shown !== 0;
       status.textContent =
-        filter === 'all'
-          ? `Showing all ${shown} cakes`
-          : `Showing ${shown} ${shown === 1 ? 'cake' : 'cakes'}: ${label}`;
+        filter === 'all' ? `Showing all ${shown} cakes` : `Showing ${shown} ${shown === 1 ? 'cake' : 'cakes'}: ${label}`;
+      if (push) {
+        const url = new URL(location.href);
+        if (filter === 'all') url.searchParams.delete('tag');
+        else url.searchParams.set('tag', filter);
+        history.replaceState(null, '', url);
+      }
+    };
+    chips.forEach((chip) => chip.addEventListener('click', () => apply(chip.dataset.filter || 'all')));
+
+    const validTags = new Set(chips.map((c) => c.dataset.filter || 'all'));
+    const startTag = new URLSearchParams(location.search).get('tag') || 'all';
+    apply(validTags.has(startTag) ? startTag : 'all', false);
+
+    // ---- Lightbox --------------------------------------------------------
+    const canLightbox = lb && lbImg && lbTitle && lbNote && lbOrder && lbPrev && lbNext && lbClose && typeof lb.showModal === 'function';
+    let current = -1;
+    let opener: HTMLElement | null = null;
+
+    const visibleTiles = () => tiles.filter((t) => !(t.closest('.cake-grid__item') as HTMLElement | null)?.hidden);
+
+    const show = (tile: HTMLAnchorElement) => {
+      if (!canLightbox) return;
+      current = tiles.indexOf(tile);
+      const img = tile.querySelector('img');
+      lbImg!.src = tile.dataset.full || img?.currentSrc || img?.src || '';
+      lbImg!.alt = img?.alt || tile.dataset.title || '';
+      lbTitle!.textContent = tile.dataset.title || '';
+      lbNote!.textContent = tile.dataset.note || '';
+      lbNote!.hidden = !tile.dataset.note;
+      lbOrder!.href = `${orderBase}?cake=${encodeURIComponent(tile.dataset.title || '')}`;
+      if (!lb!.open) lb!.showModal();
+      history.replaceState(null, '', `#${tile.dataset.slug}`);
     };
 
-    chips.forEach((chip) => {
-      chip.addEventListener('click', () => {
-        chips.forEach((c) => {
-          c.classList.remove('is-active');
-          c.setAttribute('aria-pressed', 'false');
-        });
-        chip.classList.add('is-active');
-        chip.setAttribute('aria-pressed', 'true');
-        const label = (chip.firstChild?.textContent || '').trim();
-        apply(chip.dataset.filter || 'all', label);
+    const step = (dir: 1 | -1) => {
+      const vis = visibleTiles();
+      if (!vis.length) return;
+      const i = vis.indexOf(tiles[current]);
+      const next = vis[(i + dir + vis.length) % vis.length];
+      show(next);
+    };
+
+    if (canLightbox) {
+      grid.addEventListener('click', (e) => {
+        const tile = (e.target as HTMLElement).closest<HTMLAnchorElement>('a.tile');
+        if (!tile) return;
+        e.preventDefault();
+        opener = tile;
+        show(tile);
       });
+      lbPrev!.addEventListener('click', () => step(-1));
+      lbNext!.addEventListener('click', () => step(1));
+      lbClose!.addEventListener('click', () => lb!.close());
+      lb!.addEventListener('click', (e) => {
+        if (e.target === lb) lb!.close();
+      });
+      lb!.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') step(1);
+        else if (e.key === 'ArrowLeft') step(-1);
+      });
+      lb!.addEventListener('close', () => {
+        lbImg!.src = '';
+        const url = new URL(location.href);
+        url.hash = '';
+        history.replaceState(null, '', url);
+        opener?.focus();
+        opener = null;
+      });
+    }
+
+    // ---- #slug deep links (search results, the home page) ----------------
+    const openHash = () => {
+      const slug = decodeURIComponent(location.hash.slice(1));
+      if (!slug) return;
+      const tile = tiles.find((t) => t.dataset.slug === slug);
+      if (!tile) return;
+      const li = tile.closest('.cake-grid__item') as HTMLElement | null;
+      if (li?.hidden) apply('all');
+      tile.scrollIntoView({ block: 'center' });
+      tile.classList.add('is-hit');
+      setTimeout(() => tile.classList.remove('is-hit'), 2400);
+      if (canLightbox) {
+        opener = tile;
+        show(tile);
+      }
+    };
+    openHash();
+    window.addEventListener('hashchange', () => {
+      if (!lb?.open) openHash();
     });
   }
 </script>
 
 <style>
   .cakes-intro {
-    padding-bottom: var(--sp-6);
+    padding-bottom: var(--sp-5);
   }
   .cakes-intro h1 {
     margin-bottom: var(--sp-4);
@@ -116,7 +258,7 @@ const description =
     text-wrap: balance;
   }
   .cakes-main {
-    padding-top: var(--sp-6);
+    padding-top: var(--sp-4);
   }
 
   .filter {
@@ -132,7 +274,7 @@ const description =
     font-size: var(--fs-sm);
     font-weight: 600;
     color: var(--c-ink-soft);
-    background: var(--c-cream);
+    background: var(--c-white);
     border: 1.5px solid var(--c-line);
     border-radius: var(--radius-pill);
     padding: 0.55rem 1rem;
@@ -168,23 +310,147 @@ const description =
     margin: 0;
     padding: 0;
     display: grid;
-    gap: var(--sp-5);
+    gap: var(--sp-3);
     grid-template-columns: repeat(2, 1fr);
   }
   @media (min-width: 700px) {
     .cake-grid {
       grid-template-columns: repeat(3, 1fr);
-      gap: var(--sp-6) var(--sp-5);
+      gap: var(--sp-4);
     }
   }
   @media (min-width: 1000px) {
     .cake-grid {
       grid-template-columns: repeat(4, 1fr);
+      gap: var(--sp-5);
     }
+  }
+  .cake-grid__item[hidden] {
+    display: none;
   }
   .cake-empty {
     margin-top: var(--sp-6);
     font-size: var(--fs-md);
     color: var(--c-ink-soft);
+  }
+
+  /* ---- Lightbox -------------------------------------------------------- */
+  .lb {
+    width: min(96vw, 1040px);
+    max-height: 94vh;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--c-white);
+    color: var(--c-ink);
+    box-shadow: var(--shadow-lift);
+    overflow: hidden;
+  }
+  .lb::backdrop {
+    background: rgba(74, 47, 42, 0.6);
+    backdrop-filter: blur(3px);
+  }
+  .lb[open] {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .lb__media {
+    min-height: 0;
+    background: var(--c-mat);
+    display: grid;
+    place-items: center;
+  }
+  .lb__media img {
+    width: 100%;
+    height: 100%;
+    max-height: 62vh;
+    object-fit: contain;
+  }
+  .lb__meta {
+    padding: var(--sp-4) var(--sp-5) var(--sp-5);
+    border-top: 1px solid var(--c-line);
+    display: grid;
+    gap: var(--sp-1);
+  }
+  .lb__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    line-height: 1.1;
+  }
+  .lb__note {
+    margin: 0;
+    color: var(--c-ink-soft);
+    font-size: var(--fs-sm);
+  }
+  .lb__note[hidden] {
+    display: none;
+  }
+  .lb__actions {
+    margin-top: var(--sp-3);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+  .lb__nav {
+    display: flex;
+    gap: var(--sp-2);
+  }
+  .lb__arrow,
+  .lb__close {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--c-line);
+    border-radius: 50%;
+    background: var(--c-white);
+    color: var(--c-ink);
+    cursor: pointer;
+  }
+  .lb__arrow svg,
+  .lb__close svg {
+    width: 22px;
+    height: 22px;
+  }
+  .lb__arrow:hover,
+  .lb__close:hover {
+    background: var(--c-cream);
+    border-color: var(--c-ink);
+  }
+  .lb__close {
+    position: absolute;
+    top: var(--sp-3);
+    right: var(--sp-3);
+    z-index: 1;
+    box-shadow: var(--shadow-card);
+  }
+  @media (min-width: 820px) {
+    .lb[open] {
+      grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+      grid-template-rows: none;
+      max-height: 90vh;
+    }
+    .lb__media img {
+      max-height: 90vh;
+    }
+    .lb__meta {
+      border-top: 0;
+      border-left: 1px solid var(--c-line);
+      align-content: end;
+      padding: var(--sp-6);
+    }
+    .lb__title {
+      font-size: 2.2rem;
+    }
+    .lb__actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .lb__nav {
+      justify-content: flex-end;
+    }
   }
 </style>
