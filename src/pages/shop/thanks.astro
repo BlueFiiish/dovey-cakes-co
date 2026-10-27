@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LaurelDivider from '../../components/LaurelDivider.astro';
+import { business } from '../../data/business';
+import { link } from '../../lib/link';
+---
+
+<BaseLayout title="Thank you" description="Your pop-up order is paid.">
+  <section class="section">
+    <div class="container thanks">
+      <LaurelDivider compact />
+      <p class="eyebrow">Paid</p>
+      <h1>Thank you!</h1>
+      <p class="lead">Show this screen at the cart and your treats are yours. A receipt is on its way to your email.</p>
+      <p class="thanks__ref" id="thanks-ref" hidden></p>
+      <div class="thanks__actions">
+        <a class="btn btn--primary" href={link('/shop/')}>Order more</a>
+        <a class="btn btn--secondary" href={business.contact.tiktok.url} target="_blank" rel="noopener">Follow on TikTok</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  try {
+    localStorage.removeItem('dovey-cart');
+  } catch {
+    /* ignore */
+  }
+  const id = new URLSearchParams(location.search).get('session_id');
+  const ref = document.getElementById('thanks-ref');
+  if (id && ref) {
+    ref.textContent = `Order reference: ${id.slice(-8).toUpperCase()}`;
+    ref.hidden = false;
+  }
+</script>
+
+<style>
+  .thanks {
+    text-align: center;
+    max-width: 48ch;
+  }
+  .thanks h1 {
+    margin-bottom: var(--sp-3);
+  }
+  .thanks .lead {
+    margin-inline: auto;
+  }
+  .thanks__ref {
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .thanks__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-5);
+  }
+</style>

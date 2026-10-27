@@ -1,0 +1,23 @@
+# Copy to .dev.vars for `npx wrangler pages dev dist` (never commit .dev.vars).
+# Set the same names as Secrets in the Cloudflare Pages project for production.
+
+# --- Stripe (pop-up shop checkout) ---
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# --- Supabase (order log) ---
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
+# --- Order notifications (optional, Resend) ---
+RESEND_API_KEY=re_...
+NOTIFY_EMAIL=J.v.marie874@gmail.com
+NOTIFY_FROM="Dovey Cakes Co. <orders@yourdomain.com>"
+
+# --- AI cake ideas ---
+ANTHROPIC_API_KEY=sk-ant-...
+IMAGE_PROVIDER=openai            # openai | gemini
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=AIza...
+IDEA_DAILY_CAP=100               # images per day across all visitors (needs the IDEA_KV binding)
+TURNSTILE_SECRET_KEY=0x...       # Cloudflare Turnstile (bot check); pair with PUBLIC_TURNSTILE_SITE_KEY at build time

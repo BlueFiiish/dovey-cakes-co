@@ -184,6 +184,21 @@ const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
     if (details && !details.value) details.value = `I'd like something like the "${wanted}" cake on your site.`;
   }
 
+  // "Send this to the order form" from /cake-ideas/: /order/?idea=<note>&occasion=<occasion>
+  const params = new URLSearchParams(location.search);
+  const idea = params.get('idea');
+  if (idea) {
+    const type = document.getElementById('f-orderType') as HTMLSelectElement | null;
+    const theme = document.getElementById('f-colorTheme') as HTMLInputElement | null;
+    const details = document.getElementById('f-details') as HTMLTextAreaElement | null;
+    if (type) type.value = 'Custom cake';
+    if (theme && !theme.value) theme.value = idea.slice(0, 120);
+    if (details && !details.value) {
+      const occ = params.get('occasion');
+      details.value = `${occ ? `Occasion: ${occ}. ` : ''}From the cake-ideas page: ${idea}`;
+    }
+  }
+
   if (form && success && errorEl) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

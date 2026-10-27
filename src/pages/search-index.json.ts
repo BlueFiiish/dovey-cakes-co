@@ -67,6 +67,8 @@ export const GET: APIRoute = () => {
     { t: 'Porch pop-ups', s: popups(), k: 'popup pop up porch cart dates when where', u: link('/pop-ups/'), g: 'Page' },
     { t: 'Serving sizes', s: 'How big should the cake be?', k: 'servings size chart people tiers shapes', u: link('/menu/#sizes'), g: 'Page' },
     { t: 'Ordering & policy', s: 'Lead time, deposit, rush fee, pickup, allergens', k: 'policy deposit zelle cash app pickup allergy allergens rush', u: link('/menu/#policy'), g: 'Page' },
+    { t: 'Picture your cake', s: 'Describe a cake and get a concept image', k: 'ai idea ideas design picture generate inspiration', u: link('/cake-ideas/'), g: 'Page' },
+    { t: 'Pop-up cart', s: 'Pick cookies and cake pops, pay, grab them at the cart', k: 'shop cart buy pay checkout apple pay qr', u: link('/shop/'), g: 'Page' },
     { t: 'About', s: `The baker behind ${business.name}`, k: 'about story who', u: link('/about/'), g: 'Page' },
     { t: `TikTok ${business.contact.tiktok.handle}`, s: 'Videos, menus of the week and pop-up dates', k: 'tiktok social follow video', u: business.contact.tiktok.url, g: 'Social' },
   ];

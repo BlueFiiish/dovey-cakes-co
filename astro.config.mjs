@@ -2,12 +2,13 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
-// Deployment target. Currently a GitHub Pages PROJECT site, so the build lives
-// under a subpath. When she gets her own domain, flip these two lines:
-//   SITE -> 'https://herdomain.com'  and  BASE -> '/'  (everything else is base-aware).
+// Deployment target. Two hosts are supported:
+//   GitHub Pages (project site, default):  SITE=https://bluefiiish.github.io  BASE=/dovey-cakes-co/
+//   Cloudflare Pages (functions, own domain): set SITE_URL=https://<domain> and SITE_BASE=/ in the
+//   Pages project's build environment variables. Everything else is base-aware via src/lib/link.ts.
 // SITE = origin only (no trailing path). BASE = subpath with leading + trailing slash.
-const SITE = 'https://bluefiiish.github.io';
-const BASE = '/dovey-cakes-co/';
+const SITE = process.env.SITE_URL ?? 'https://bluefiiish.github.io';
+const BASE = process.env.SITE_BASE ?? '/dovey-cakes-co/';
 
 // https://astro.build/config
 export default defineConfig({

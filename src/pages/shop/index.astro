@@ -1,0 +1,391 @@
+---
+// The QR cart: scan at the porch cart, tap quantities, pay. With Stripe configured (Cloudflare
+// host) "Pay now" opens Stripe Checkout with Apple Pay / Google Pay / card / Cash App Pay. On
+// GitHub Pages, or before the keys exist, it falls back to "pay at the cart": the total plus a
+// Cash App link when the cashtag is set. Cart quantities persist in localStorage.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LaurelDivider from '../../components/LaurelDivider.astro';
+import { business } from '../../data/business';
+import { popups } from '../../data/popups';
+import { shop, money } from '../../data/shop';
+import { link } from '../../lib/link';
+
+const title = 'Pop-up cart';
+const description =
+  'Order cookies and cake pops from the Dovey Cakes Co. porch cart in Rosenberg, TX. Pick your treats, pay with Apple Pay, Google Pay, card or Cash App, and grab them at the cart.';
+const pops = shop.items.filter((i) => i.category === 'pop');
+const cookies = shop.items.filter((i) => i.category === 'cookie');
+const next = popups.next;
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="section shop-intro">
+    <div class="container">
+      <p class="eyebrow">{next ? `${next.dateLabel} · ${next.timeLabel}` : 'Porch pop-up cart'}</p>
+      <h1>Pick your treats</h1>
+      <p class="lead">
+        Tap what you&rsquo;d like, pay, and it&rsquo;s yours at the cart. Cake pops are
+        ${shop.items[0].priceCents! / 100} each or {shop.bundles[0].qty} for {money(shop.bundles[0].priceCents)}.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--white shop-main">
+    <div class="container shop-layout">
+      <div class="shop-menu" id="shop-menu" data-checkout={link('/api/checkout')} data-cashtag={shop.cashtag || ''} data-min={shop.minimumCents}>
+        <h2 class="mini-h">Cake pops</h2>
+        <ul class="items" role="list">
+          {pops.map((item) => (
+            <li class="item" data-id={item.id} data-price={item.priceCents ?? ''}>
+              <div class="item__text">
+                <p class="item__name">{item.name}</p>
+                {item.desc && <p class="item__desc">{item.desc}</p>}
+              </div>
+              <div class="stepper" role="group" aria-label={`${item.name} quantity`}>
+                <button type="button" class="stepper__btn" data-step="-1" aria-label={`Fewer ${item.name}`}>&minus;</button>
+                <output class="stepper__n" aria-live="polite">0</output>
+                <button type="button" class="stepper__btn" data-step="1" aria-label={`More ${item.name}`}>+</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <h2 class="mini-h">Cookies of the month</h2>
+        <ul class="items" role="list">
+          {cookies.map((item) => (
+            <li class="item" data-id={item.id} data-price={item.priceCents ?? ''}>
+              <div class="item__text">
+                <p class="item__name">{item.name} {item.priceCents === null && <span class="item__tag">price at the cart</span>}</p>
+                {item.desc && <p class="item__desc">{item.desc}</p>}
+              </div>
+              <div class="stepper" role="group" aria-label={`${item.name} quantity`}>
+                <button type="button" class="stepper__btn" data-step="-1" aria-label={`Fewer ${item.name}`}>&minus;</button>
+                <output class="stepper__n" aria-live="polite">0</output>
+                <button type="button" class="stepper__btn" data-step="1" aria-label={`More ${item.name}`}>+</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <aside class="cart" id="cart" aria-label="Your order">
+        <h2 class="cart__h">Your order</h2>
+        <ul class="cart__lines" id="cart-lines" role="list"></ul>
+        <p class="cart__empty" id="cart-empty">Nothing picked yet.</p>
+        <p class="cart__total"><span>Total</span> <strong id="cart-total">$0</strong></p>
+        <p class="cart__note" id="cart-note" hidden></p>
+        <button type="button" class="btn btn--primary cart__pay" id="cart-pay" disabled>Pay now</button>
+        <div class="cart__fallback" id="cart-fallback" hidden>
+          <p class="cart__fallback-h">Pay at the cart</p>
+          <p class="cart__fallback-p">Show this screen and pay by {business.ordering.payments.join(', ')} or cash.</p>
+          <a class="btn btn--secondary" id="cart-cashapp" href="#" hidden target="_blank" rel="noopener">Pay with Cash App</a>
+        </div>
+        <p class="cart__fine">Pickup at the cart only. {popups.howToFindOut}</p>
+      </aside>
+    </div>
+  </section>
+
+  <LaurelDivider />
+</BaseLayout>
+
+<script>
+  import { priceCart, money } from '../../data/shop';
+
+  const menu = document.getElementById('shop-menu');
+  const linesEl = document.getElementById('cart-lines');
+  const emptyEl = document.getElementById('cart-empty');
+  const totalEl = document.getElementById('cart-total');
+  const noteEl = document.getElementById('cart-note');
+  const payBtn = document.getElementById('cart-pay') as HTMLButtonElement | null;
+  const fallback = document.getElementById('cart-fallback');
+  const cashapp = document.getElementById('cart-cashapp') as HTMLAnchorElement | null;
+
+  if (menu && linesEl && emptyEl && totalEl && noteEl && payBtn && fallback && cashapp) {
+    const KEY = 'dovey-cart';
+    const checkoutUrl = menu.dataset.checkout || '/api/checkout';
+    const cashtag = (menu.dataset.cashtag || '').replace(/^\$/, '');
+    const minimum = Number(menu.dataset.min || 0);
+    const items = Array.from(menu.querySelectorAll<HTMLElement>('.item'));
+    let qty: Record<string, number> = {};
+    try {
+      qty = JSON.parse(localStorage.getItem(KEY) || '{}');
+    } catch {
+      qty = {};
+    }
+    // Pay-at-the-cart mode is remembered once the checkout endpoint says it isn't there.
+    let fallbackMode = sessionStorage.getItem('dovey-cart-fallback') === '1';
+
+    const lines = () => Object.entries(qty).filter(([, n]) => n > 0).map(([id, n]) => ({ id, qty: n }));
+
+    const render = () => {
+      items.forEach((el) => {
+        const out = el.querySelector<HTMLOutputElement>('.stepper__n');
+        if (out) out.value = String(qty[el.dataset.id || ''] || 0);
+      });
+      const cart = priceCart(lines());
+      linesEl.replaceChildren(
+        ...cart.lines.map((l) => {
+          const li = document.createElement('li');
+          const name = document.createElement('span');
+          name.textContent = `${l.name} x ${l.qty}`;
+          const price = document.createElement('span');
+          price.textContent = l.lineCents === null ? 'at the cart' : money(l.lineCents);
+          const sub = document.createElement('small');
+          sub.textContent = l.breakdown;
+          li.append(name, price, sub);
+          return li;
+        })
+      );
+      emptyEl.hidden = cart.lines.length > 0;
+      totalEl.textContent = money(cart.subtotalCents) + (cart.unpriced.length ? ' + cookies' : '');
+
+      let note = '';
+      if (cart.unpriced.length) note = 'Cookie prices are settled at the cart, so this order is paid in person.';
+      else if (cart.lines.length && cart.subtotalCents < minimum) note = `Online payment starts at ${money(minimum)}. Smaller orders are paid at the cart.`;
+      noteEl.textContent = note;
+      noteEl.hidden = !note;
+
+      const canPay = cart.payableOnline && !fallbackMode;
+      payBtn.disabled = !canPay;
+      payBtn.hidden = fallbackMode;
+      fallback.hidden = cart.lines.length === 0 || canPay;
+      if (cashtag && cart.subtotalCents > 0 && !cart.unpriced.length) {
+        cashapp.href = `https://cash.app/$${cashtag}/${(cart.subtotalCents / 100).toFixed(2)}`;
+        cashapp.hidden = false;
+      } else {
+        cashapp.hidden = true;
+      }
+      try {
+        localStorage.setItem(KEY, JSON.stringify(qty));
+      } catch {
+        /* private mode */
+      }
+    };
+
+    items.forEach((el) => {
+      const id = el.dataset.id || '';
+      el.querySelectorAll<HTMLButtonElement>('.stepper__btn').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          qty[id] = Math.max(0, Math.min(24, (qty[id] || 0) + Number(btn.dataset.step)));
+          render();
+        })
+      );
+    });
+
+    payBtn.addEventListener('click', async () => {
+      payBtn.disabled = true;
+      payBtn.textContent = 'Opening checkout…';
+      try {
+        const res = await fetch(checkoutUrl, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ lines: lines() }),
+        });
+        if (res.status === 404 || res.status === 503) {
+          fallbackMode = true;
+          sessionStorage.setItem('dovey-cart-fallback', '1');
+          render();
+          return;
+        }
+        const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+        if (res.ok && data.url) {
+          location.href = data.url;
+          return;
+        }
+        throw new Error(data.error || 'checkout failed');
+      } catch {
+        noteEl.textContent = 'Checkout didn’t open. You can pay at the cart instead.';
+        noteEl.hidden = false;
+        fallbackMode = true;
+        render();
+      } finally {
+        payBtn.textContent = 'Pay now';
+      }
+    });
+
+    if (new URLSearchParams(location.search).get('cancelled')) {
+      noteEl.textContent = 'Checkout was cancelled. Your picks are still here.';
+      noteEl.hidden = false;
+    }
+    render();
+  }
+</script>
+
+<style>
+  .shop-intro h1 {
+    margin-bottom: var(--sp-3);
+  }
+  .shop-intro {
+    padding-bottom: var(--sp-5);
+  }
+  .shop-main {
+    padding-top: var(--sp-6);
+  }
+  .shop-layout {
+    display: grid;
+    gap: var(--sp-6);
+  }
+  @media (min-width: 880px) {
+    .shop-layout {
+      grid-template-columns: 1.4fr 1fr;
+      gap: var(--sp-8);
+      align-items: start;
+    }
+    .cart {
+      position: sticky;
+      top: 92px;
+    }
+  }
+  .mini-h {
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-rose-deep);
+    margin: 0 0 var(--sp-3);
+  }
+  .items {
+    list-style: none;
+    margin: 0 0 var(--sp-6);
+    padding: 0;
+    border-top: 1px solid var(--c-line);
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding-block: var(--sp-4);
+    border-bottom: 1px solid var(--c-line);
+  }
+  .item__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1.15;
+  }
+  .item__tag {
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-ink-soft);
+    background: var(--c-cream);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-pill);
+    padding: 2px 8px;
+    vertical-align: middle;
+  }
+  .item__desc {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    flex: none;
+  }
+  .stepper__btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid var(--c-line);
+    background: var(--c-white);
+    color: var(--c-ink);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .stepper__btn:hover {
+    border-color: var(--c-ink);
+  }
+  .stepper__n {
+    min-width: 2ch;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cart {
+    background: var(--c-cream);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius);
+    padding: var(--sp-5);
+  }
+  .cart__h {
+    font-size: 1.6rem;
+    margin-bottom: var(--sp-3);
+  }
+  .cart__lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sp-2);
+  }
+  .cart__lines li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    font-size: var(--fs-sm);
+  }
+  .cart__lines small {
+    grid-column: 1 / -1;
+    color: var(--c-ink-soft);
+    font-size: var(--fs-xs);
+  }
+  .cart__empty {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .cart__total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: var(--sp-4) 0;
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--c-line);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+  }
+  .cart__total strong {
+    font-weight: 400;
+    font-size: 1.8rem;
+    color: var(--c-rose-deep);
+  }
+  .cart__note {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .cart__pay {
+    width: 100%;
+  }
+  .cart__pay[hidden] {
+    display: none;
+  }
+  .cart__fallback {
+    margin-top: var(--sp-3);
+    padding: var(--sp-4);
+    background: var(--c-white);
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-sm);
+  }
+  .cart__fallback-h {
+    margin: 0 0 var(--sp-1);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+  }
+  .cart__fallback-p {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-sm);
+    color: var(--c-ink-soft);
+  }
+  .cart__fine {
+    margin: var(--sp-4) 0 0;
+    font-size: var(--fs-xs);
+    color: var(--c-ink-soft);
+  }
+</style>
